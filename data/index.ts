@@ -1,7 +1,7 @@
 // Derived data — do not edit manually.
 // Computed from data/lines.ts.
 
-import { lines, LineId } from "./lines";
+import { lines, LineId, CanonicalLineId } from "./lines";
 
 export type StationInfo = {
   name: string;
