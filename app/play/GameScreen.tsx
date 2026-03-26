@@ -133,7 +133,7 @@ export default function GameScreen() {
         </div>
 
         {/* Prompt */}
-        <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-transparent rounded-2xl p-5 h-56">
+        <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-transparent rounded-2xl p-5 min-h-36 overflow-hidden">
           <Prompt question={question} selectedOption={selectedOption} revealed={revealed} typedAnswer={answered ? input : null} difficulty={difficulty} answered={answered} />
         </div>
 

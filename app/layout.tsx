@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { LangProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
@@ -7,6 +7,11 @@ import LangToggle from "@/app/components/LangToggle";
 export const metadata: Metadata = {
   title: "Paris Métro Quiz",
   description: "How well do you know the Paris Métro?",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

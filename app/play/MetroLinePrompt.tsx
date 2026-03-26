@@ -35,7 +35,7 @@ export default function MetroLinePrompt({ lineId, context, correctAnswer, select
 
   // Segment: colored bar connecting circles, mt centers it on h-7 (28px) circles: (28-6)/2 = 11px
   const Segment = () => (
-    <div className="h-1.5 w-36 flex-shrink-0 mt-[11px]" style={{ backgroundColor: color }} />
+    <div className="h-1.5 flex-1 sm:flex-none sm:w-36 mt-[11px]" style={{ backgroundColor: color }} />
   );
 
   const Tail = ({ show }: { show: boolean }) => (
@@ -43,7 +43,7 @@ export default function MetroLinePrompt({ lineId, context, correctAnswer, select
   );
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-5 sm:gap-10">
       {/* Title */}
       <div className="flex items-center text-sm text-gray-400">
         <span className="w-7 h-7 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0 bg-white text-gray-900" style={{ boxShadow: "0 0 0 2px #111" }}>
@@ -54,11 +54,11 @@ export default function MetroLinePrompt({ lineId, context, correctAnswer, select
       </div>
 
       {/* Station row */}
-      <div className="flex items-start justify-center">
+      <div className="flex items-start w-full sm:w-auto sm:justify-center">
         <Tail show={!leftTerminus} />
 
         {stationData.map(({ name, isLast, otherLines }, i) => (
-          <div key={i} className="flex items-start">
+          <div key={i} className={`flex items-start${!isLast ? " flex-1 sm:flex-none" : ""}`}>
             {/* Station: circle + label */}
             <div className="flex flex-col items-center gap-2" style={{ width: 28 }}>
               <div
@@ -71,7 +71,7 @@ export default function MetroLinePrompt({ lineId, context, correctAnswer, select
                     : { backgroundColor: color, borderColor: color }
                 }
               />
-              <div className="flex flex-col items-center gap-1" style={{ width: 150 }}>
+              <div className="flex flex-col items-center gap-1 w-24 sm:w-[150px]">
                 <span
                   className={`text-center text-base leading-tight min-h-[2.5rem] flex items-center justify-center ${
                     isLast
