@@ -37,7 +37,8 @@ export type Question = MultipleChoiceQuestion | FreeTextQuestion | LineSelectQue
 export type CompleteTheLinePrompt = {
   kind: "complete-the-line";
   lineId: LineId;
-  context: string[];   // 2-3 stations shown in order
+  context: string[];   // 2 stations shown in order
+  variant: "next" | "middle"; // "next": guess the station after context; "middle": guess the station between context[0] and context[1]
 };
 
 export type LinesToNamePrompt = {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { GameMode, Difficulty } from "@/lib/game/types";
 import { useLang } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
@@ -13,10 +13,17 @@ const PREVIEW_SLUG: Partial<Record<GameMode, string>> = {
 };
 
 function PreviewImage({ src, alt }: { src: string; alt: string }) {
+  const imgRef = useRef<HTMLImageElement>(null);
   const [loaded, setLoaded] = useState(false);
+
+  // Handles cached images: onLoad may not fire if the image is already complete.
+  useEffect(() => {
+    if (imgRef.current?.complete) setLoaded(true);
+  }, []);
+
   return (
     <img
-      key={src}
+      ref={imgRef}
       src={src}
       alt={alt}
       className="w-full rounded-xl border-2 border-gray-300 dark:border-gray-500 object-cover"
@@ -50,7 +57,7 @@ export default function Home() {
               )}
               <div className="flex-1">
                 <h2 className="text-lg font-semibold mb-3 text-center sm:text-left">{title}</h2>
-                {PREVIEW_SLUG[mode] && <PreviewImage src={`/previews/${PREVIEW_SLUG[mode]}_${theme}_${lang}.png`} alt={title} />}
+                {PREVIEW_SLUG[mode] && <PreviewImage key={`${PREVIEW_SLUG[mode]}_${theme}_${lang}`} src={`/previews/${PREVIEW_SLUG[mode]}_${theme}_${lang}.png`} alt={title} />}
               </div>
               <div className="flex flex-col gap-2 items-center">
                 <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.home.level}</span>

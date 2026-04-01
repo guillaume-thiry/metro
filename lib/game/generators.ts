@@ -1,4 +1,5 @@
 import { lines, stationList, LINE_IDS, LineId, activeLines, LINE_WEIGHTS } from "@/data/index";
+import { POST_FORK_STATIONS } from "@/data/lines";
 import {
   Difficulty,
   Question,
@@ -36,13 +37,35 @@ export function generateCompleteTheLine(difficulty: Difficulty): Question {
   }
   const stationSeq = Math.random() < 0.5 ? lines[lineId] : [...lines[lineId]].reverse();
 
-  const contextSize = 2;
-  const maxStart = stationSeq.length - contextSize - 1;
-  const startIdx = Math.floor(Math.random() * (maxStart + 1));
-  const context = stationSeq.slice(startIdx, startIdx + contextSize);
-  const correctAnswer = stationSeq[startIdx + contextSize];
+  // Both variants need 3 consecutive stations.
+  const maxStart = stationSeq.length - 3;
+  const allStartIndices = Array.from({ length: maxStart + 1 }, (_, i) => i);
 
-  const prompt = { kind: "complete-the-line" as const, lineId, context };
+  // For "next", the answer is stationSeq[startIdx + 2]. Post-fork stations are ambiguous
+  // (two valid next stations exist), so exclude those start indices.
+  const nextValidIndices = allStartIndices.filter(
+    (i) => !POST_FORK_STATIONS.includes(stationSeq[i + 2])
+  );
+
+  // Fall back to "middle" if no valid "next" indices exist (shouldn't happen in practice).
+  const variant: "next" | "middle" =
+    nextValidIndices.length > 0 && Math.random() < 0.5 ? "next" : "middle";
+
+  let startIdx: number;
+  let context: string[];
+  let correctAnswer: string;
+
+  if (variant === "next") {
+    startIdx = nextValidIndices[Math.floor(Math.random() * nextValidIndices.length)];
+    context = [stationSeq[startIdx], stationSeq[startIdx + 1]];
+    correctAnswer = stationSeq[startIdx + 2];
+  } else {
+    startIdx = allStartIndices[Math.floor(Math.random() * allStartIndices.length)];
+    context = [stationSeq[startIdx], stationSeq[startIdx + 2]];
+    correctAnswer = stationSeq[startIdx + 1];
+  }
+
+  const prompt = { kind: "complete-the-line" as const, lineId, context, variant };
 
   if (difficulty === "easy") {
     const distractors = sampleExcluding(stationSeq, 3, [...context, correctAnswer]);

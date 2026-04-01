@@ -40,6 +40,7 @@ export const translations = {
     },
     prompt: {
       findNext: "Find the next station",
+      findMiddle: "Find the middle station",
       linesToName: "Which station is on all these lines?",
       nameToLines: "Which lines does this station belong to?",
     },
@@ -83,6 +84,7 @@ export const translations = {
     },
     prompt: {
       findNext: "Trouvez la station suivante",
+      findMiddle: "Trouvez la station du milieu",
       linesToName: "Quelle station est sur toutes ces lignes ?",
       nameToLines: "Sur quelles lignes est cette station ?",
     },

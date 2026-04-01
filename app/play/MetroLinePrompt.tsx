@@ -1,6 +1,7 @@
 "use client";
 
 import { LineId, stations as stationMap, lines, toCanonicalLineId } from "@/data/index";
+import { FORK_STATIONS } from "@/data/lines";
 import { lineColor } from "@/data/lineColors";
 import LineBadge from "@/app/components/LineBadge";
 import { useLang } from "@/lib/i18n";
@@ -8,29 +9,36 @@ import { useLang } from "@/lib/i18n";
 type Props = {
   lineId: LineId;
   context: string[];
+  variant: "next" | "middle";
   correctAnswer: string;
   selectedAnswer?: string | null;
   isCorrect?: boolean;
   showHints?: boolean;
 };
 
-export default function MetroLinePrompt({ lineId, context, correctAnswer, selectedAnswer, isCorrect, showHints = true }: Props) {
+export default function MetroLinePrompt({ lineId, context, variant, correctAnswer, selectedAnswer, isCorrect, showHints = true }: Props) {
   const { t } = useLang();
   const color = lineColor(lineId);
-  const lastLabel = selectedAnswer ?? "??";
-  const stationNames = [...context, lastLabel];
+  const answerLabel = selectedAnswer ?? "??";
+
+  // Build the ordered list of station names to display, and track which index is the answer slot.
+  const stationNames = variant === "middle"
+    ? [context[0], answerLabel, context[1]]
+    : [...context, answerLabel];
+  const answerIndex = variant === "middle" ? 1 : stationNames.length - 1;
 
   const termini = new Set([lines[lineId][0], lines[lineId][lines[lineId].length - 1]]);
   const leftTerminus = termini.has(context[0]);
-  const rightTerminus = termini.has(correctAnswer);
+  const rightTerminus = variant === "middle" ? termini.has(context[1]) : termini.has(correctAnswer);
 
   const stationData = stationNames.map((name, i) => {
-    const isLast = i === stationNames.length - 1;
-    const lookupName = isLast ? correctAnswer : name;
+    const isAnswer = i === answerIndex;
+    const lookupName = isAnswer ? correctAnswer : name;
     const otherLines = (stationMap.get(lookupName)?.lines ?? [])
       .filter((l) => toCanonicalLineId(l) !== toCanonicalLineId(lineId))
       .filter((l, i, arr) => arr.findIndex((m) => toCanonicalLineId(m) === toCanonicalLineId(l)) === i);
-    return { name, isLast, otherLines };
+    const isFork = FORK_STATIONS.includes(lookupName);
+    return { name, isAnswer, otherLines, isFork };
   });
 
   // Segment: colored bar connecting circles, mt centers it on h-7 (28px) circles: (28-6)/2 = 11px
@@ -50,31 +58,40 @@ export default function MetroLinePrompt({ lineId, context, correctAnswer, select
           M
         </span>
         <span className="ml-1"><LineBadge lineId={lineId} size="md" /></span>
-        <span className="ml-3 text-gray-900 dark:text-white text-lg font-bold">{t.prompt.findNext}</span>
+        <span className="ml-3 text-gray-900 dark:text-white text-lg font-bold">{variant === "middle" ? t.prompt.findMiddle : t.prompt.findNext}</span>
       </div>
 
       {/* Station row */}
       <div className="flex items-start w-full sm:w-auto sm:justify-center">
         <Tail show={!leftTerminus} />
 
-        {stationData.map(({ name, isLast, otherLines }, i) => (
-          <div key={i} className={`flex items-start${!isLast ? " flex-1 sm:flex-none" : ""}`}>
+        {stationData.map(({ name, isAnswer, otherLines, isFork }, i) => (
+          <div key={i} className={`flex items-start${i < stationData.length - 1 ? " flex-1 sm:flex-none" : ""}`}>
             {/* Station: circle + label */}
             <div className="flex flex-col items-center gap-2" style={{ width: 28 }}>
-              <div
-                className="w-7 h-7 rounded-full flex-shrink-0 border-4"
-                style={
-                  !showHints && !isLast
-                    ? { backgroundColor: "#9ca3af", borderColor: "black", borderWidth: 5 }
-                    : otherLines.length > 0
-                    ? { backgroundColor: "white", borderColor: "black", borderWidth: 5 }
-                    : { backgroundColor: color, borderColor: color }
-                }
-              />
+              {/* Circle, with optional fork indicator branching upward */}
+              <div className="relative">
+                {isFork && (
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 w-1.5"
+                    style={{ backgroundColor: color, height: 16, bottom: "100%" }}
+                  />
+                )}
+                <div
+                  className="w-7 h-7 rounded-full flex-shrink-0 border-4"
+                  style={
+                    !showHints && !isAnswer
+                      ? { backgroundColor: "#9ca3af", borderColor: "black", borderWidth: 5 }
+                      : otherLines.length > 0
+                      ? { backgroundColor: "white", borderColor: "black", borderWidth: 5 }
+                      : { backgroundColor: color, borderColor: color }
+                  }
+                />
+              </div>
               <div className="flex flex-col items-center gap-1 w-24 sm:w-[150px]">
                 <span
                   className={`text-center text-base leading-tight min-h-[2.5rem] flex items-center justify-center ${
-                    isLast
+                    isAnswer
                       ? selectedAnswer
                         ? isCorrect
                           ? "text-green-400 font-bold"
@@ -91,7 +108,7 @@ export default function MetroLinePrompt({ lineId, context, correctAnswer, select
                         {otherLines.map((l) => <LineBadge key={String(l)} lineId={l} size="sm" />)}
                       </div>
                     )
-                  : !isLast && (
+                  : !isAnswer && (
                       <span className="w-6 h-6 rounded-full bg-gray-400 dark:bg-gray-500 flex items-center justify-center text-white text-xs font-bold">?</span>
                     )
                 }
@@ -99,7 +116,7 @@ export default function MetroLinePrompt({ lineId, context, correctAnswer, select
             </div>
 
             {/* Segment to next */}
-            {!isLast && <Segment />}
+            {i < stationData.length - 1 && <Segment />}
           </div>
         ))}
 

@@ -249,6 +249,7 @@ function Prompt({ question, selectedOption, revealed, typedAnswer, difficulty, a
       <MetroLinePrompt
         lineId={prompt.lineId}
         context={prompt.context}
+        variant={prompt.variant}
         correctAnswer={correctAnswer}
         selectedAnswer={displayAnswer}
         isCorrect={isCorrect}
