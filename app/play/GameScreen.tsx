@@ -133,14 +133,14 @@ export default function GameScreen() {
         </div>
 
         {/* Prompt */}
-        <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-transparent rounded-2xl p-5 min-h-36 overflow-hidden">
+        <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-transparent rounded-2xl p-5 h-52 overflow-hidden">
           <Prompt question={question} selectedOption={selectedOption} revealed={revealed} typedAnswer={answered ? input : null} difficulty={difficulty} answered={answered} />
         </div>
 
         {/* Answer area */}
         {question.type === "multiple-choice" && (
-          <div className="grid grid-cols-2 gap-3">
-            {question.options.map((opt) => {
+          <div className="grid grid-cols-2 gap-3" style={{ perspective: "800px" }}>
+            {question.options.map((opt, i) => {
               const isCorrect = opt === question.correctAnswer;
               const isSelected = opt === selectedOption;
               let bg = "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white";
@@ -153,10 +153,11 @@ export default function GameScreen() {
               }
               return (
                 <button
-                  key={opt}
+                  key={`q${questionIndex}-${i}`}
                   onClick={() => submitMultipleChoice(opt)}
                   disabled={answered}
                   className={`rounded-xl px-4 py-3 text-base font-medium text-center h-16 flex items-center justify-center ${answered ? "transition-colors duration-500" : ""} ${bg}`}
+                  style={{ animation: `cardFlipIn 0.4s ease-out ${i * 80}ms both` }}
                 >
                   {opt}
                 </button>
