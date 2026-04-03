@@ -40,3 +40,18 @@ body {
   color: var(--foreground);
   font-family: "Parisine", Arial, sans-serif;
 }
+
+@keyframes slideUpIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUpOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-10px); }
+}
+
+@keyframes cardFlipIn {
+  from { transform: rotateX(-70deg); opacity: 0; }
+  to   { transform: rotateX(0deg);   opacity: 1; }
+}
