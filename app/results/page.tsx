@@ -12,8 +12,13 @@ function ResultsContent() {
   const total = Number(params.get("total") ?? 10);
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center gap-6">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center gap-6 px-4">
       <h1 className="text-3xl font-bold">{t.results.title}</h1>
+      <img
+        src={`/scores/${score}.jpg`}
+        alt={`Score ${score}`}
+        className="w-64 h-64 object-cover rounded-2xl shadow-lg"
+      />
       <p className="text-5xl font-semibold text-blue-500 dark:text-blue-400">
         {score} <span className="text-gray-400 dark:text-gray-500 text-3xl">/ {total}</span>
       </p>
