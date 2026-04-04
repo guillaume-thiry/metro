@@ -29,6 +29,7 @@ export default function GameScreen() {
 
   const [question, setQuestion] = useState<Question>(() => generateQuestion(mode, difficulty));
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -49,7 +50,9 @@ export default function GameScreen() {
 
   function nextQuestion() {
     if (questionIndex + 1 >= QUESTIONS_PER_SESSION) {
-      router.push(`/results?score=${score}&total=${QUESTIONS_PER_SESSION}`);
+      sessionStorage.setItem("quizScore", String(scoreRef.current));
+      sessionStorage.setItem("quizTotal", String(QUESTIONS_PER_SESSION));
+      router.push("/results");
       return;
     }
     setQuestion(generateQuestion(mode, difficulty));
@@ -74,7 +77,7 @@ export default function GameScreen() {
     const isCorrect = normalize(input) === normalize(correct);
 
     if (isCorrect) {
-      setScore((s) => s + 1);
+      scoreRef.current += 1; setScore(scoreRef.current);
       setFeedback(t.game.correct);
     } else {
       setFeedback(`${t.game.wrongAnswer} ${correct}`);
@@ -88,7 +91,7 @@ export default function GameScreen() {
 
   function submitMultipleChoice(option: string) {
     if (answered || question.type !== "multiple-choice") return;
-    if (option === question.correctAnswer) setScore((s) => s + 1);
+    if (option === question.correctAnswer) { scoreRef.current += 1; setScore(scoreRef.current); }
     setSelectedOption(option);
     setAnswered(true);
     setTimeout(() => setRevealed(true), 150);
@@ -102,7 +105,7 @@ export default function GameScreen() {
     const isCorrect =
       correct.size === selected.size && [...correct].every((l) => selected.has(l));
     if (isCorrect) {
-      setScore((s) => s + 1);
+      scoreRef.current += 1; setScore(scoreRef.current);
       setFeedback(t.game.correct);
     } else {
       setFeedback(`${t.game.wrongLines} ${question.correctLines.map(toCanonicalLineId).join(", ")}`);

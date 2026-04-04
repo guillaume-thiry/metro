@@ -1,7 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import GameScreen from "./GameScreen";
+
+const GameScreen = dynamic(() => import("./GameScreen"), { ssr: false });
 
 export default function PlayPage() {
   return (
