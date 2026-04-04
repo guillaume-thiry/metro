@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { GameMode, Difficulty, Question } from "@/lib/game/types";
 import { generateQuestion } from "@/lib/game/generators";
-import { LINE_IDS, LineId, toCanonicalLineId } from "@/data/index";
+import { LINE_IDS, LineId, toCanonicalLineId, stations } from "@/data/index";
 import MetroLinePrompt from "./MetroLinePrompt";
 import LineBadge from "@/app/components/LineBadge";
 import { useLang } from "@/lib/i18n";
@@ -17,6 +17,26 @@ function normalize(s: string) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]/g, "");
+}
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+  return dp[m][n];
+}
+
+function isCorrectAnswer(input: string, correct: string): boolean {
+  const a = normalize(input);
+  const b = normalize(correct);
+  const threshold = Math.round(b.length / 5);
+  return levenshtein(a, b) <= threshold;
 }
 
 export default function GameScreen() {
@@ -74,7 +94,7 @@ export default function GameScreen() {
     if (question.type !== "free-text") return;
 
     const correct = question.correctAnswer;
-    const isCorrect = normalize(input) === normalize(correct);
+    const isCorrect = isCorrectAnswer(input, correct);
 
     if (isCorrect) {
       scoreRef.current += 1; setScore(scoreRef.current);
@@ -169,26 +189,50 @@ export default function GameScreen() {
           </div>
         )}
 
-        {question.type === "free-text" && (
+        {question.type === "free-text" && (() => {
+          const normalizedInput = normalize(input);
+          const suggestion = !answered && difficulty === "medium" && normalizedInput.length >= 5
+            ? ([...stations.keys()].filter(name => normalize(name).includes(normalizedInput)).length === 1
+                ? [...stations.keys()].find(name => normalize(name).includes(normalizedInput))!
+                : null)
+            : null;
+          const ghostSuffix = suggestion?.toLowerCase().startsWith(input.toLowerCase())
+            ? suggestion.slice(input.length)
+            : null;
+          return (
           <div className="flex flex-col gap-2">
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !answered && submitFreeText()}
-              disabled={answered}
-              placeholder={t.game.placeholder}
-              className={`border rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none transition-colors duration-500
-                ${answered && freeTextCorrect === true ? "bg-green-700 border-green-500 text-white" : ""}
-                ${answered && freeTextCorrect === false ? "bg-red-700 border-red-500 text-white" : ""}
-                ${!answered ? "bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:border-blue-500" : ""}
-              `}
-            />
+            <div className={`relative border rounded-xl transition-colors duration-500
+              ${answered && freeTextCorrect === true ? "bg-green-700 border-green-500" : ""}
+              ${answered && freeTextCorrect === false ? "bg-red-700 border-red-500" : ""}
+              ${!answered ? "bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus-within:border-blue-500" : ""}
+            `}>
+              {ghostSuffix && (
+                <div className="absolute inset-0 px-4 py-3 flex items-center pointer-events-none overflow-hidden" aria-hidden>
+                  <span className="whitespace-pre text-transparent select-none">{input}</span>
+                  <span className="whitespace-pre text-gray-400 dark:text-gray-500">{ghostSuffix}</span>
+                </div>
+              )}
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !answered) submitFreeText();
+                  if (e.key === "Tab" && suggestion) { e.preventDefault(); setInput(suggestion); }
+                }}
+                disabled={answered}
+                placeholder={t.game.placeholder}
+                className={`w-full bg-transparent px-4 py-3 focus:outline-none transition-colors duration-500
+                  ${answered ? "text-white" : "text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"}
+                `}
+              />
+            </div>
             <div className={`rounded-xl px-4 py-3 font-medium transition-colors duration-300 ${answered && freeTextCorrect === false ? "bg-green-700 border border-green-500 text-white" : "invisible"}`}>
               {question.correctAnswer}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {question.type === "line-select" && (
           <div className="flex flex-col gap-4">
@@ -245,10 +289,12 @@ function Prompt({ question, selectedOption, revealed, typedAnswer, difficulty, a
 
   if (prompt.kind === "complete-the-line") {
     const correctAnswer = question.type === "multiple-choice" || question.type === "free-text" ? question.correctAnswer : "";
-    const displayAnswer = question.type === "free-text" ? typedAnswer : (revealed ? selectedOption : null);
     const isCorrect = question.type === "free-text"
-      ? normalize(typedAnswer ?? "") === normalize(correctAnswer)
+      ? isCorrectAnswer(typedAnswer ?? "", correctAnswer)
       : selectedOption === correctAnswer;
+    const displayAnswer = question.type === "free-text"
+      ? (typedAnswer !== null ? (isCorrect ? correctAnswer : typedAnswer) : null)
+      : (revealed ? selectedOption : null);
     return (
       <MetroLinePrompt
         lineId={prompt.lineId}
