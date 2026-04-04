@@ -7,7 +7,7 @@ export type Lang = "en" | "fr";
 export const translations = {
   en: {
     home: {
-      subtitle: "How well do you know the Paris Métro?",
+      subtitle: "Please, mind the gap between the train and the platform.",
       modes: {
         "complete-the-line": {
           title: "Complete the Line",
@@ -51,7 +51,7 @@ export const translations = {
   },
   fr: {
     home: {
-      subtitle: "Connaissez-vous bien le métro parisien ?",
+      subtitle: "Attention à la marche en descendant du train.",
       modes: {
         "complete-the-line": {
           title: "Compléter la ligne",

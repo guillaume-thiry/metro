@@ -39,9 +39,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center px-4 py-10 sm:p-6 gap-10">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-2">Paris Métro Quiz</h1>
-        <p className="text-gray-500 dark:text-gray-400">{t.home.subtitle}</p>
+      <div className="text-center flex flex-col items-center gap-2">
+        <img src="/previews/metropoly.png" alt="Métropoly" className="w-full max-w-2xl aspect-[5/2] object-cover rounded-3xl" />
+        <p className="text-gray-500 dark:text-gray-400 italic mt-6" style={{ animation: "breathe 1.5s ease-in-out infinite" }}>{t.home.subtitle}</p>
       </div>
 
       <div className="flex flex-col gap-6 w-full max-w-2xl">

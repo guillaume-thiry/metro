@@ -55,3 +55,8 @@ body {
   from { transform: rotateX(-70deg); opacity: 0; }
   to   { transform: rotateX(0deg);   opacity: 1; }
 }
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.06); }
+}

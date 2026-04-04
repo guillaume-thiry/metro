@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/lib/theme";
 import LangToggle from "@/app/components/LangToggle";
 
 export const metadata: Metadata = {
-  title: "Paris Métro Quiz",
+  title: "Métropoly",
   description: "How well do you know the Paris Métro?",
 };
 
