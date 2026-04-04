@@ -86,8 +86,8 @@ function GraphicsRow({ stationData, color, leftTerminus, rightTerminus, showHint
               <div
                 className="w-7 h-7 rounded-full flex-shrink-0 border-4"
                 style={
-                  !showHints && !isAnswer
-                    ? { backgroundColor: "#9ca3af", borderColor: "black", borderWidth: 5 }
+                  !showHints
+                    ? { backgroundColor: color, borderColor: color }
                     : otherLines.length > 0
                     ? { backgroundColor: "white", borderColor: "black", borderWidth: 5 }
                     : { backgroundColor: color, borderColor: color }
@@ -160,7 +160,7 @@ function LabelsRow({ stationData, selectedAnswer, isCorrect, showHints }: Omit<L
                       {otherLines.map((l) => <LineBadge key={String(l)} lineId={l} size="sm" />)}
                     </div>
                   )
-                : !isAnswer && (
+                : (
                     <span className="w-6 h-6 rounded-full bg-gray-400 dark:bg-gray-500 flex items-center justify-center text-white text-xs font-bold">?</span>
                   )
               }
