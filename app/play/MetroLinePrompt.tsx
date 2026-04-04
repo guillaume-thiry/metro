@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { LineId, stations as stationMap, lines, toCanonicalLineId } from "@/data/index";
 import { FORK_STATIONS } from "@/data/lines";
 import { lineColor } from "@/data/lineColors";
@@ -9,14 +9,15 @@ import { useLang } from "@/lib/i18n";
 
 // Crossfades between line badges when lineId changes.
 function AnimatedLineBadge({ lineId }: { lineId: LineId }) {
-  const [current, setCurrent] = useState(lineId);
+  const [displayedId, setDisplayedId] = useState(lineId);
   const [outgoing, setOutgoing] = useState<LineId | null>(null);
+  const prevRef = useRef(lineId);
 
-  useEffect(() => {
-    if (lineId === current) return;
-    setOutgoing(current);
-    setCurrent(lineId);
-  }, [lineId]);
+  if (lineId !== displayedId) {
+    setDisplayedId(lineId);
+    setOutgoing(prevRef.current);
+  }
+  prevRef.current = lineId;
 
   return (
     <div className="relative flex items-center">
@@ -30,8 +31,8 @@ function AnimatedLineBadge({ lineId }: { lineId: LineId }) {
           <LineBadge lineId={outgoing} size="md" />
         </div>
       )}
-      <div key={`in-${String(current)}`} style={{ animation: "slideUpIn 0.5s ease-out" }}>
-        <LineBadge lineId={current} size="md" />
+      <div key={`in-${String(displayedId)}`} style={{ animation: "slideUpIn 0.5s ease-out" }}>
+        <LineBadge lineId={displayedId} size="md" />
       </div>
     </div>
   );
@@ -104,14 +105,15 @@ function GraphicsRow({ stationData, color, leftTerminus, rightTerminus, showHint
 
 // Crossfades between graphics rows when the question changes.
 function AnimatedGraphics(props: GraphicsSnapshot) {
-  const [current, setCurrent] = useState<GraphicsSnapshot>(props);
+  const [displayedKey, setDisplayedKey] = useState(props.questionKey);
   const [outgoing, setOutgoing] = useState<GraphicsSnapshot | null>(null);
+  const prevRef = useRef(props);
 
-  useEffect(() => {
-    if (props.questionKey === current.questionKey) return;
-    setOutgoing(current);
-    setCurrent(props);
-  }, [props.questionKey]);
+  if (props.questionKey !== displayedKey) {
+    setDisplayedKey(props.questionKey);
+    setOutgoing(prevRef.current);
+  }
+  prevRef.current = props;
 
   return (
     <div className="relative">
@@ -124,7 +126,7 @@ function AnimatedGraphics(props: GraphicsSnapshot) {
           <GraphicsRow {...outgoing} />
         </div>
       )}
-      <div key={props.questionKey} style={{ animation: "slideUpIn 0.5s ease-out" }}>
+      <div key={displayedKey} style={{ animation: "slideUpIn 0.5s ease-out" }}>
         <GraphicsRow {...props} />
       </div>
     </div>
@@ -173,14 +175,15 @@ function LabelsRow({ stationData, selectedAnswer, isCorrect, showHints }: Omit<L
 }
 
 function AnimatedLabels(props: LabelsSnapshot) {
-  const [current, setCurrent] = useState<LabelsSnapshot>(props);
+  const [displayedKey, setDisplayedKey] = useState(props.questionKey);
   const [outgoing, setOutgoing] = useState<LabelsSnapshot | null>(null);
+  const prevRef = useRef(props);
 
-  useEffect(() => {
-    if (props.questionKey === current.questionKey) return;
-    setOutgoing(current);
-    setCurrent(props);
-  }, [props.questionKey]);
+  if (props.questionKey !== displayedKey) {
+    setDisplayedKey(props.questionKey);
+    setOutgoing(prevRef.current);
+  }
+  prevRef.current = props;
 
   return (
     <div className="relative">
@@ -193,7 +196,7 @@ function AnimatedLabels(props: LabelsSnapshot) {
           <LabelsRow {...outgoing} />
         </div>
       )}
-      <div key={props.questionKey} style={{ animation: "slideUpIn 0.5s ease-out" }}>
+      <div key={displayedKey} style={{ animation: "slideUpIn 0.5s ease-out" }}>
         <LabelsRow {...props} />
       </div>
     </div>

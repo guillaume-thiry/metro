@@ -1,15 +1,14 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/i18n";
 
 function ResultsContent() {
-  const params = useSearchParams();
   const router = useRouter();
   const { t } = useLang();
-  const score = Number(params.get("score") ?? 0);
-  const total = Number(params.get("total") ?? 10);
+  const score = Number(sessionStorage.getItem("quizScore") ?? 0);
+  const total = Number(sessionStorage.getItem("quizTotal") ?? 10);
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center gap-6 px-4">
@@ -17,7 +16,7 @@ function ResultsContent() {
       <img
         src={`/scores/${score}.jpg`}
         alt={`Score ${score}`}
-        className="w-64 h-64 object-cover rounded-2xl shadow-lg"
+        className="w-full max-w-xl aspect-video object-cover rounded-2xl shadow-lg"
       />
       <p className="text-5xl font-semibold text-blue-500 dark:text-blue-400">
         {score} <span className="text-gray-400 dark:text-gray-500 text-3xl">/ {total}</span>
