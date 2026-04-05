@@ -1,0 +1,31 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useLang } from "@/lib/i18n";
+
+export default function ResultsContent() {
+  const router = useRouter();
+  const { t } = useLang();
+  const score = Number(sessionStorage.getItem("quizScore") ?? 0);
+  const total = Number(sessionStorage.getItem("quizTotal") ?? 10);
+
+  return (
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center gap-6 px-4">
+      <h1 className="text-3xl font-bold">{t.results.title}</h1>
+      <img
+        src={`/scores/${score}.jpg`}
+        alt={`Score ${score}`}
+        className="w-full max-w-xl aspect-video object-cover rounded-2xl shadow-lg"
+      />
+      <p className="text-5xl font-semibold text-blue-500 dark:text-blue-400">
+        {score} <span className="text-gray-400 dark:text-gray-500 text-3xl">/ {total}</span>
+      </p>
+      <button
+        onClick={() => router.push("/")}
+        className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-xl transition"
+      >
+        {t.results.playAgain}
+      </button>
+    </main>
+  );
+}
