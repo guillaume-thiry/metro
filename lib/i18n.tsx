@@ -23,6 +23,7 @@ export const translations = {
         },
       },
       level: "Level",
+      tournament: "Tournament",
       easy: "Easy — multiple choice",
       medium: "Medium — harder choices",
       hard: "Hard — type the answer",
@@ -44,9 +45,15 @@ export const translations = {
       linesToName: "Which station is on all these lines?",
       nameToLines: "Which lines does this station belong to?",
     },
+    difficulties: {
+      easy: "Easy",
+      medium: "Medium",
+      hard: "Hard",
+    },
     results: {
       title: "Results",
       playAgain: "Play again",
+      inARow: "in a row",
     },
   },
   fr: {
@@ -67,6 +74,7 @@ export const translations = {
         },
       },
       level: "Niveau",
+      tournament: "Tournoi",
       easy: "Facile — QCM",
       medium: "Moyen — choix plus difficiles",
       hard: "Difficile — saisir la réponse",
@@ -88,9 +96,15 @@ export const translations = {
       linesToName: "Quelle station est sur toutes ces lignes ?",
       nameToLines: "Sur quelles lignes est cette station ?",
     },
+    difficulties: {
+      easy: "Facile",
+      medium: "Moyen",
+      hard: "Difficile",
+    },
     results: {
       title: "Résultats",
       playAgain: "Rejouer",
+      inARow: "d'affilée",
     },
   },
 } as const;

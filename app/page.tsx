@@ -38,10 +38,13 @@ export default function Home() {
   const { theme } = useTheme();
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center px-4 py-10 sm:p-6 gap-10">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center px-4 pt-20 pb-10 sm:p-6 gap-10">
       <div className="text-center flex flex-col items-center gap-2">
         <img src="/previews/metropoly.png" alt="Métropoly" className="w-full max-w-2xl aspect-[5/2] object-cover rounded-3xl" />
-        <p className="text-gray-500 dark:text-gray-400 italic mt-6" style={{ animation: "breathe 1.5s ease-in-out infinite" }}>{t.home.subtitle}</p>
+        <div className="flex flex-col sm:flex-row sm:relative sm:items-center sm:justify-center items-center gap-3 sm:gap-0 w-full max-w-2xl mt-6">
+          <p className="text-gray-500 dark:text-gray-400 italic text-center" style={{ animation: "breathe 1.5s ease-in-out infinite" }}>{t.home.subtitle}</p>
+          <Link href="/tournament" className="text-5xl hover:scale-110 transition-transform sm:absolute sm:right-0" title={t.home.tournament} style={{ animation: "trophy-shake 3s ease-in-out infinite" }}>🏆</Link>
+        </div>
       </div>
 
       <div className="flex flex-col gap-6 w-full max-w-2xl">
@@ -86,6 +89,7 @@ export default function Home() {
           );
         })}
       </div>
+
     </main>
   );
 }

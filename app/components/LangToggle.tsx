@@ -8,7 +8,7 @@ export default function LangToggle() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="fixed top-4 right-4 flex flex-col gap-1 z-50">
+    <div className="fixed top-4 right-4 flex flex-row sm:flex-col gap-1 z-50">
       <div className="flex gap-1">
         <button
           onClick={() => setLang("fr")}
