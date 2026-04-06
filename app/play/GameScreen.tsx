@@ -8,36 +8,9 @@ import { LINE_IDS, LineId, toCanonicalLineId, stations } from "@/data/index";
 import MetroLinePrompt from "./MetroLinePrompt";
 import LineBadge from "@/app/components/LineBadge";
 import { useLang } from "@/lib/i18n";
+import { normalize, isCorrectAnswer } from "@/lib/game/answer";
 
 const QUESTIONS_PER_SESSION = 10;
-
-function normalize(s: string) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]/g, "");
-}
-
-function levenshtein(a: string, b: string): number {
-  const m = a.length, n = b.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) =>
-    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
-  );
-  for (let i = 1; i <= m; i++)
-    for (let j = 1; j <= n; j++)
-      dp[i][j] = a[i - 1] === b[j - 1]
-        ? dp[i - 1][j - 1]
-        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
-  return dp[m][n];
-}
-
-function isCorrectAnswer(input: string, correct: string): boolean {
-  const a = normalize(input);
-  const b = normalize(correct);
-  const threshold = Math.round(b.length / 5);
-  return levenshtein(a, b) <= threshold;
-}
 
 export default function GameScreen() {
   const params = useSearchParams();
@@ -67,11 +40,13 @@ export default function GameScreen() {
     }
   }, [question]);
 
-
   function nextQuestion() {
     if (questionIndex + 1 >= QUESTIONS_PER_SESSION) {
       sessionStorage.setItem("quizScore", String(scoreRef.current));
       sessionStorage.setItem("quizTotal", String(QUESTIONS_PER_SESSION));
+      sessionStorage.setItem("quizMode", mode);
+      sessionStorage.setItem("quizDifficulty", difficulty);
+      sessionStorage.removeItem("quizTournament");
       router.push("/results");
       return;
     }
@@ -111,7 +86,8 @@ export default function GameScreen() {
 
   function submitMultipleChoice(option: string) {
     if (answered || question.type !== "multiple-choice") return;
-    if (option === question.correctAnswer) { scoreRef.current += 1; setScore(scoreRef.current); }
+    const isCorrect = option === question.correctAnswer;
+    if (isCorrect) { scoreRef.current += 1; setScore(scoreRef.current); }
     setSelectedOption(option);
     setAnswered(true);
     setTimeout(() => setRevealed(true), 150);
