@@ -3,7 +3,7 @@ import { lineColor, lineTextColor } from "@/data/lineColors";
 
 type Props = {
   lineId: LineId;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
 };
 
 function parseLineId(lineId: LineId): { number: string; bis: boolean } {
@@ -18,9 +18,9 @@ export default function LineBadge({ lineId, size = "md" }: Props) {
   const { number, bis } = parseLineId(lineId);
   const bg = lineColor(lineId);
   const color = lineTextColor(lineId);
-  const dim = size === "md" ? "w-7 h-7" : "w-6 h-6";
-  const numSize = size === "md" ? "text-base" : "text-xs";
-  const bisSize = size === "md" ? "text-[9px]" : "text-[8px]";
+  const dim = size === "lg" ? "w-11 h-11" : size === "md" ? "w-7 h-7" : "w-6 h-6";
+  const numSize = size === "lg" ? "text-2xl" : size === "md" ? "text-base" : "text-xs";
+  const bisSize = size === "lg" ? "text-xs" : size === "md" ? "text-[9px]" : "text-[8px]";
 
   return (
     <span

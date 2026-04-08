@@ -6,11 +6,13 @@ import { GameMode, Difficulty } from "@/lib/game/types";
 import { useLang } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 
-const GAME_MODES: GameMode[] = ["complete-the-line", "lines-to-name", "name-to-lines"];
+const GAME_MODES: GameMode[] = ["complete-the-line", "name-to-lines", "lines-to-name"];
 const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"];
-const PREVIEW_SLUG: Partial<Record<GameMode, string>> = {
-  "complete-the-line": "complete",
-};
+function previewSrc(mode: GameMode, theme: string, lang: string): string | null {
+  if (mode === "complete-the-line") return `/previews/complete_${theme}_${lang}.png`;
+  if (mode === "name-to-lines") return `/previews/find_line_${theme}.png`;
+  return null;
+}
 
 function PreviewImage({ src, alt }: { src: string; alt: string }) {
   const imgRef = useRef<HTMLImageElement>(null);
@@ -50,7 +52,7 @@ export default function Home() {
       <div className="flex flex-col gap-6 w-full max-w-2xl">
         {GAME_MODES.map((mode) => {
           const { title, description } = t.home.modes[mode];
-          const wip = mode !== "complete-the-line";
+          const wip = mode === "lines-to-name";
           return (
             <div key={mode} className={`relative bg-white dark:bg-gray-700 border border-gray-200 dark:border-transparent rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${wip ? "opacity-50" : ""}`}>
               {wip && (
@@ -60,7 +62,7 @@ export default function Home() {
               )}
               <div className="flex-1">
                 <h2 className="text-lg font-semibold mb-3 text-center sm:text-left">{title}</h2>
-                {PREVIEW_SLUG[mode] && <PreviewImage key={`${PREVIEW_SLUG[mode]}_${theme}_${lang}`} src={`/previews/${PREVIEW_SLUG[mode]}_${theme}_${lang}.png`} alt={title} />}
+                {previewSrc(mode, theme, lang) && <PreviewImage key={`${mode}_${theme}_${lang}`} src={previewSrc(mode, theme, lang)!} alt={title} />}
               </div>
               <div className="flex flex-col gap-2 items-center">
                 <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.home.level}</span>

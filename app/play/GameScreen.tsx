@@ -8,6 +8,7 @@ import { LINE_IDS, LineId, toCanonicalLineId, stations } from "@/data/index";
 import MetroLinePrompt from "./MetroLinePrompt";
 import LineBadge from "@/app/components/LineBadge";
 import { useLang } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 import { normalize, isCorrectAnswer } from "@/lib/game/answer";
 
 const QUESTIONS_PER_SESSION = 10;
@@ -16,6 +17,7 @@ export default function GameScreen() {
   const params = useSearchParams();
   const router = useRouter();
   const { t } = useLang();
+  const { theme } = useTheme();
 
   const mode = (params.get("mode") ?? "complete-the-line") as GameMode;
   const difficulty = (params.get("difficulty") ?? "easy") as Difficulty;
@@ -40,6 +42,7 @@ export default function GameScreen() {
     }
   }, [question]);
 
+
   function nextQuestion() {
     if (questionIndex + 1 >= QUESTIONS_PER_SESSION) {
       sessionStorage.setItem("quizScore", String(scoreRef.current));
@@ -60,6 +63,13 @@ export default function GameScreen() {
     setFreeTextCorrect(null);
     setAnswered(false);
   }
+
+  useEffect(() => {
+    if (question.type !== "line-select" || difficulty !== "hard" || answered) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Enter") submitLineSelect(selectedLines); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [question, difficulty, answered, selectedLines]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [feedback, setFeedback] = useState<string | null>(null);
   const [freeTextCorrect, setFreeTextCorrect] = useState<boolean | null>(null);
@@ -94,10 +104,10 @@ export default function GameScreen() {
     setTimeout(nextQuestion, 2000);
   }
 
-  function submitLineSelect() {
+  function submitLineSelect(lines: Set<LineId>) {
     if (answered || question.type !== "line-select") return;
     const correct = new Set(question.correctLines.map(String));
-    const selected = new Set([...selectedLines].map(String));
+    const selected = new Set([...lines].map(String));
     const isCorrect =
       correct.size === selected.size && [...correct].every((l) => selected.has(l));
     if (isCorrect) {
@@ -107,16 +117,38 @@ export default function GameScreen() {
       setFeedback(`${t.game.wrongLines} ${question.correctLines.map(toCanonicalLineId).join(", ")}`);
     }
     setAnswered(true);
+    setTimeout(() => setRevealed(true), 150);
+    setTimeout(nextQuestion, 2000);
+  }
+
+  function submitLineSelectSingle(lineId: LineId) {
+    if (answered || question.type !== "line-select") return;
+    const isCorrect = question.correctLines.includes(lineId);
+    setSelectedLines(new Set([lineId]));
+    if (isCorrect) { scoreRef.current += 1; setScore(scoreRef.current); }
+    setAnswered(true);
+    setTimeout(() => setRevealed(true), 150);
+    setTimeout(nextQuestion, 2000);
   }
 
   function toggleLine(lineId: LineId) {
-    if (answered) return;
-    setSelectedLines((prev) => {
-      const next = new Set(prev);
-      if (next.has(lineId)) next.delete(lineId);
-      else next.add(lineId);
-      return next;
-    });
+    if (answered || question.type !== "line-select") return;
+    if (difficulty === "hard") {
+      setSelectedLines((prev) => {
+        const next = new Set(prev);
+        if (next.has(lineId)) next.delete(lineId);
+        else next.add(lineId);
+        return next;
+      });
+      return;
+    }
+    if (selectedLines.has(lineId)) return; // no deselect for medium
+    const next = new Set(selectedLines);
+    next.add(lineId);
+    setSelectedLines(next);
+    if (next.size === question.correctLines.length) {
+      setTimeout(() => submitLineSelect(next), 0);
+    }
   }
 
   return (
@@ -132,8 +164,8 @@ export default function GameScreen() {
         </div>
 
         {/* Prompt */}
-        <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-transparent rounded-2xl p-5 h-52 overflow-hidden">
-          <Prompt question={question} selectedOption={selectedOption} revealed={revealed} typedAnswer={answered ? input : null} difficulty={difficulty} answered={answered} />
+        <div className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-transparent rounded-2xl p-5 h-52 overflow-hidden">
+          <Prompt question={question} selectedOption={selectedOption} revealed={revealed} typedAnswer={answered ? input : null} difficulty={difficulty} answered={answered} questionIndex={questionIndex} />
         </div>
 
         {/* Answer area */}
@@ -142,13 +174,13 @@ export default function GameScreen() {
             {question.options.map((opt, i) => {
               const isCorrect = opt === question.correctAnswer;
               const isSelected = opt === selectedOption;
-              let bg = "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white";
+              let bg = "bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white border border-gray-300 dark:border-transparent";
               if (answered && revealed) {
-                if (isCorrect) bg = "bg-green-600 text-white";
-                else if (isSelected) bg = "bg-red-600 text-white";
-                else bg = "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500";
+                if (isCorrect) bg = "bg-green-600 text-white border-transparent";
+                else if (isSelected) bg = "bg-red-600 text-white border-transparent";
+                else bg = "bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500 border border-gray-300 dark:border-transparent";
               } else if (answered) {
-                bg = "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white";
+                bg = "bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-transparent";
               }
               return (
                 <button
@@ -178,9 +210,9 @@ export default function GameScreen() {
           return (
           <div className="flex flex-col gap-2">
             <div className={`relative border rounded-xl transition-colors duration-500
-              ${answered && freeTextCorrect === true ? "bg-green-700 border-green-500" : ""}
-              ${answered && freeTextCorrect === false ? "bg-red-700 border-red-500" : ""}
-              ${!answered ? "bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus-within:border-blue-500" : ""}
+              ${answered && freeTextCorrect === true ? "bg-green-600 border-green-500" : ""}
+              ${answered && freeTextCorrect === false ? "bg-red-600 border-red-500" : ""}
+              ${!answered ? "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus-within:border-blue-500" : ""}
             `}>
               {ghostSuffix && (
                 <div className="absolute inset-0 px-4 py-3 flex items-center pointer-events-none overflow-hidden" aria-hidden>
@@ -203,63 +235,136 @@ export default function GameScreen() {
                 `}
               />
             </div>
-            <div className={`rounded-xl px-4 py-3 font-medium transition-colors duration-300 ${answered && freeTextCorrect === false ? "bg-green-700 border border-green-500 text-white" : "invisible"}`}>
+            <div className={`rounded-xl px-4 py-3 font-medium transition-colors duration-300 ${answered && freeTextCorrect === false ? "bg-green-600 border border-green-500 text-white" : "invisible"}`}>
               {question.correctAnswer}
             </div>
           </div>
           );
         })()}
 
-        {question.type === "line-select" && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap gap-2">
-              {question.visibleLines.map((lineId) => (
+        {question.type === "line-select" && difficulty === "easy" && (
+          <div className="grid grid-cols-2 gap-3" style={{ perspective: "800px" }}>
+            {question.visibleLines.map((lineId, i) => {
+              const isCorrect = question.correctLines.includes(lineId);
+              const isSelected = selectedLines.has(lineId);
+              let bg = "bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-transparent";
+              if (answered && revealed) {
+                if (isCorrect) bg = "bg-green-600 border-transparent";
+                else if (isSelected) bg = "bg-red-600 border-transparent";
+                else bg = "bg-gray-200 dark:bg-gray-700 opacity-40 border border-gray-300 dark:border-transparent";
+              } else if (answered) {
+                bg = "bg-white dark:bg-gray-700 border border-gray-300 dark:border-transparent";
+              }
+              return (
                 <button
-                  key={String(lineId)}
-                  onClick={() => toggleLine(lineId)}
+                  key={`q${questionIndex}-${i}`}
+                  onClick={() => submitLineSelectSingle(lineId)}
                   disabled={answered}
-                  className={`rounded-full transition p-0.5
-                    ${selectedLines.has(lineId) ? "ring-2 ring-gray-900 dark:ring-white" : "ring-2 ring-transparent"}
-                    ${answered && question.correctLines.includes(lineId) ? "ring-2 ring-green-500" : ""}
-                  `}
+                  className={`rounded-2xl p-5 flex items-center justify-center ${answered ? "transition-colors duration-500" : ""} ${bg}`}
+                  style={{ animation: `cardFlipIn 0.4s ease-out ${i * 80}ms both` }}
                 >
-                  <LineBadge lineId={lineId} size="md" />
+                  <LineBadge lineId={lineId} size="lg" />
                 </button>
-              ))}
+              );
+            })}
+          </div>
+        )}
+
+        {question.type === "line-select" && difficulty === "medium" && (
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-8 gap-2" style={{ perspective: "800px" }}>
+              {question.visibleLines.map((lineId, i) => {
+                const isCorrect = question.correctLines.includes(lineId);
+                const isSelected = selectedLines.has(lineId);
+                const isMissed = answered && revealed && isCorrect && !isSelected;
+                const isWrong = answered && revealed && !isCorrect && isSelected;
+                const isHit = answered && revealed && isCorrect && isSelected;
+                let bg = "bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-transparent";
+                if (answered && revealed) {
+                  if (isHit) bg = "bg-green-600 border-transparent";
+                  else if (isWrong) bg = "bg-red-600 border-transparent";
+                  else if (isMissed) bg = "border-transparent";
+                  else bg = "bg-gray-200 dark:bg-gray-700 opacity-40 border border-gray-300 dark:border-transparent";
+                } else if (answered) {
+                  bg = "bg-white dark:bg-gray-700 border border-gray-300 dark:border-transparent";
+                } else if (isSelected) {
+                  bg = "bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500";
+                }
+                const hatchStyle = isMissed
+                  ? {
+                      backgroundColor: theme === "dark" ? "#374151" : "#ffffff",
+                      backgroundImage: "repeating-linear-gradient(-45deg, #16a34a 0px, #16a34a 4px, transparent 4px, transparent 10px)",
+                    }
+                  : {};
+                return (
+                  <button
+                    key={`q${questionIndex}-${i}`}
+                    onClick={() => toggleLine(lineId)}
+                    disabled={answered}
+                    className={`rounded-xl py-3 flex items-center justify-center ${answered ? "transition-colors duration-500" : ""} ${bg}`}
+                    style={{ animation: `cardFlipIn 0.4s ease-out ${i * 40}ms both`, ...hatchStyle }}
+                  >
+                    <LineBadge lineId={lineId} size="md" />
+                  </button>
+                );
+              })}
             </div>
-            {!answered && (
-              <button
-                onClick={submitLineSelect}
-                className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-xl transition self-end"
-              >
-                {t.game.confirm}
-              </button>
-            )}
+            <button onClick={() => submitLineSelect(selectedLines)} disabled={answered} className={`font-semibold px-6 py-3 rounded-xl transition self-end text-white ${answered ? "bg-blue-600 opacity-40 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-500"}`}>
+              {t.game.confirm}
+            </button>
           </div>
         )}
 
-        {/* Feedback — only for line-select */}
-        {feedback && question.type === "line-select" && (
-          <div className={`text-sm rounded-xl px-4 py-3 ${feedback.startsWith("✗") ? "bg-red-900/40 text-red-300" : "bg-green-900/40 text-green-300"}`}>
-            {feedback}
+        {question.type === "line-select" && difficulty === "hard" && (
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-8 gap-2" style={{ perspective: "800px" }}>
+              {question.visibleLines.map((lineId, i) => {
+                const isCorrect = question.correctLines.includes(lineId);
+                const isSelected = selectedLines.has(lineId);
+                const isMissed = answered && revealed && isCorrect && !isSelected;
+                const isWrong = answered && revealed && !isCorrect && isSelected;
+                const isHit = answered && revealed && isCorrect && isSelected;
+                let bg = "bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-transparent";
+                if (answered && revealed) {
+                  if (isHit) bg = "bg-green-600 border-transparent";
+                  else if (isWrong) bg = "bg-red-600 border-transparent";
+                  else if (isMissed) bg = "border-transparent";
+                  else bg = "bg-gray-200 dark:bg-gray-700 opacity-40 border border-gray-300 dark:border-transparent";
+                } else if (answered) {
+                  bg = "bg-white dark:bg-gray-700 border border-gray-300 dark:border-transparent";
+                } else if (isSelected) {
+                  bg = "bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500";
+                }
+                const hatchStyle = isMissed
+                  ? {
+                      backgroundColor: theme === "dark" ? "#374151" : "#ffffff",
+                      backgroundImage: "repeating-linear-gradient(-45deg, #16a34a 0px, #16a34a 4px, transparent 4px, transparent 10px)",
+                    }
+                  : {};
+                return (
+                  <button
+                    key={`q${questionIndex}-${i}`}
+                    onClick={() => toggleLine(lineId)}
+                    disabled={answered}
+                    className={`rounded-xl py-3 flex items-center justify-center ${answered ? "transition-colors duration-500" : ""} ${bg}`}
+                    style={{ animation: `cardFlipIn 0.4s ease-out ${i * 40}ms both`, ...hatchStyle }}
+                  >
+                    <LineBadge lineId={lineId} size="md" />
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={() => submitLineSelect(selectedLines)} disabled={answered} className={`font-semibold px-6 py-3 rounded-xl transition self-end text-white ${answered ? "bg-blue-600 opacity-40 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-500"}`}>
+              {t.game.confirm}
+            </button>
           </div>
-        )}
-
-        {/* Next — only for line-select */}
-        {answered && question.type === "line-select" && (
-          <button
-            onClick={nextQuestion}
-            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-xl transition self-end"
-          >
-            {questionIndex + 1 >= QUESTIONS_PER_SESSION ? t.game.seeResults : t.game.next}
-          </button>
         )}
       </div>
     </main>
   );
 }
 
-function Prompt({ question, selectedOption, revealed, typedAnswer, difficulty, answered }: { question: Question; selectedOption: string | null; revealed: boolean; typedAnswer: string | null; difficulty: Difficulty; answered: boolean }) {
+function Prompt({ question, selectedOption, revealed, typedAnswer, difficulty, answered, questionIndex }: { question: Question; selectedOption: string | null; revealed: boolean; typedAnswer: string | null; difficulty: Difficulty; answered: boolean; questionIndex: number }) {
   const { t } = useLang();
   const { prompt } = question;
 
@@ -298,10 +403,51 @@ function Prompt({ question, selectedOption, revealed, typedAnswer, difficulty, a
   }
 
   if (prompt.kind === "name-to-lines") {
+    if (difficulty === "easy") {
+      const correctLine = question.type === "line-select" ? question.correctLines[0] : null;
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-4">
+          <p key={questionIndex} className="text-2xl font-bold text-center" style={{ animation: "slideUpIn 0.5s ease-out" }}>{prompt.stationName}</p>
+          {revealed && correctLine
+            ? <LineBadge lineId={correctLine} size="lg" />
+            : <div className="w-11 h-11 rounded-full bg-gray-300 dark:bg-gray-500 flex items-center justify-center text-white font-bold text-xl">?</div>
+          }
+        </div>
+      );
+    }
+    if (difficulty === "medium") {
+      const nLines = question.type === "line-select" ? question.correctLines.length : 1;
+      const correctLinesArr = (question.type === "line-select" ? [...question.correctLines] : []).sort((a, b) => {
+        const ca = String(toCanonicalLineId(a)), cb = String(toCanonicalLineId(b));
+        const na = parseInt(ca), nb = parseInt(cb);
+        if (na !== nb) return na - nb;
+        return (ca.endsWith("bis") ? 1 : 0) - (cb.endsWith("bis") ? 1 : 0);
+      });
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-4">
+          <p key={questionIndex} className="text-2xl font-bold text-center" style={{ animation: "slideUpIn 0.5s ease-out" }}>{prompt.stationName}</p>
+          <div className="flex gap-2">
+            {Array.from({ length: nLines }, (_, i) =>
+              revealed && correctLinesArr[i]
+                ? <LineBadge key={i} lineId={correctLinesArr[i]} size="lg" />
+                : <div key={i} className="w-11 h-11 rounded-full bg-gray-300 dark:bg-gray-500 flex items-center justify-center text-white font-bold text-xl">?</div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    const correctLinesArr = (question.type === "line-select" ? [...question.correctLines] : []).sort((a, b) => {
+      const ca = String(toCanonicalLineId(a)), cb = String(toCanonicalLineId(b));
+      const na = parseInt(ca), nb = parseInt(cb);
+      if (na !== nb) return na - nb;
+      return (ca.endsWith("bis") ? 1 : 0) - (cb.endsWith("bis") ? 1 : 0);
+    });
     return (
-      <div>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t.prompt.nameToLines}</p>
-        <p className="text-xl font-semibold">{prompt.stationName}</p>
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <p key={questionIndex} className="text-2xl font-bold text-center" style={{ animation: "slideUpIn 0.5s ease-out" }}>{prompt.stationName}</p>
+        <div className={`flex gap-2 ${revealed ? "" : "invisible"}`}>
+          {correctLinesArr.map((lineId, i) => <LineBadge key={i} lineId={lineId} size="lg" />)}
+        </div>
       </div>
     );
   }

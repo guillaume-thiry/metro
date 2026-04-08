@@ -62,7 +62,7 @@ export const lines: Record<LineId, string[]> = {
     "Champs-Élysées – Clemenceau",
     "Concorde",
     "Tuileries",
-    "Palais Royal – Musée du Louvre",
+    "Palais-Royal – Musée du Louvre",
     "Louvre – Rivoli",
     "Châtelet",
     "Hôtel de Ville",

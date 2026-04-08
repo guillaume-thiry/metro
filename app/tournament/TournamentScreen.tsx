@@ -124,7 +124,9 @@ export default function TournamentScreen() {
 
   const correct = question.correctAnswer;
   const isCorrect = isCorrectAnswer(input, correct);
-  const displayAnswer = answered ? (isCorrect ? correct : input) : null;
+  const isEmpty = answered && !input.trim();
+  const displayAnswer = answered ? (isCorrect || isEmpty ? correct : input) : null;
+  const displayCorrect = isCorrect || isEmpty;
 
   const normalizedInput = normalize(input);
   const ghostSuffix = null;
@@ -152,7 +154,7 @@ export default function TournamentScreen() {
             variant={prompt.variant}
             correctAnswer={correct}
             selectedAnswer={displayAnswer}
-            isCorrect={isCorrect}
+            isCorrect={displayCorrect}
             showHints={answered}
           />
         </div>
@@ -160,8 +162,8 @@ export default function TournamentScreen() {
         {/* Input */}
         <div className="flex flex-col gap-2">
           <div className={`relative border rounded-xl transition-colors duration-500
-            ${answered && freeTextCorrect === true ? "bg-green-700 border-green-500" : ""}
-            ${answered && freeTextCorrect === false ? "bg-red-700 border-red-500" : ""}
+            ${answered && freeTextCorrect === true ? "bg-green-600 border-green-500" : ""}
+            ${answered && freeTextCorrect === false ? "bg-red-600 border-red-500" : ""}
             ${!answered ? "bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus-within:border-blue-500" : ""}
           `}>
             {ghostSuffix && (
@@ -184,7 +186,7 @@ export default function TournamentScreen() {
               `}
             />
           </div>
-          <div className={`rounded-xl px-4 py-3 font-medium transition-colors duration-300 ${answered && freeTextCorrect === false ? "bg-green-700 border border-green-500 text-white" : "invisible"}`}>
+          <div className={`rounded-xl px-4 py-3 font-medium transition-colors duration-300 ${answered && freeTextCorrect === false ? "bg-green-600 border border-green-500 text-white" : "invisible"}`}>
             {correct}
           </div>
         </div>

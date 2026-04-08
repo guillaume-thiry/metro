@@ -66,12 +66,29 @@ export default function ResultsContent() {
         {count}{!tournament && <span className="text-gray-400 dark:text-gray-500 text-3xl"> / {total}</span>}
       </p>
       {tournament && <p className="text-gray-500 dark:text-gray-400">{t.results.inARow}</p>}
-      <button
-        onClick={() => router.push("/")}
-        className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-xl transition"
-      >
-        {t.results.playAgain}
-      </button>
+      <div className="flex gap-3">
+        {tournament ? (
+          <button
+            onClick={() => router.push("/tournament")}
+            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-xl transition"
+          >
+            {t.results.playAgain}
+          </button>
+        ) : mode && difficulty ? (
+          <button
+            onClick={() => router.push(`/play?mode=${mode}&difficulty=${difficulty}`)}
+            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-xl transition"
+          >
+            {t.results.playAgain}
+          </button>
+        ) : null}
+        <button
+          onClick={() => router.push("/")}
+          className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold px-6 py-3 rounded-xl transition"
+        >
+          {t.results.home}
+        </button>
+      </div>
     </main>
   );
 }
