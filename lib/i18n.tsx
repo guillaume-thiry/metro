@@ -18,7 +18,7 @@ export const translations = {
           description: "Given a set of line numbers, name the station.",
         },
         "name-to-lines": {
-          title: "Station → Lines",
+          title: "Find the Lines",
           description: "Given a station name, select all lines it belongs to.",
         },
       },
@@ -53,6 +53,7 @@ export const translations = {
     results: {
       title: "Results",
       playAgain: "Play again",
+      home: "Menu",
       inARow: "in a row",
     },
   },
@@ -69,7 +70,7 @@ export const translations = {
           description: "Trouvez la station commune à ces lignes.",
         },
         "name-to-lines": {
-          title: "Station → Lignes",
+          title: "Trouver les lignes",
           description: "Sélectionnez toutes les lignes de cette station.",
         },
       },
@@ -104,6 +105,7 @@ export const translations = {
     results: {
       title: "Résultats",
       playAgain: "Rejouer",
+      home: "Accueil",
       inARow: "d'affilée",
     },
   },

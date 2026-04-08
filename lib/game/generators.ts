@@ -1,4 +1,4 @@
-import { lines, stationList, LINE_IDS, LineId, activeLines, LINE_WEIGHTS } from "@/data/index";
+import { lines, stationList, LINE_IDS, LineId, activeLines, LINE_WEIGHTS, toCanonicalLineId } from "@/data/index";
 import { POST_FORK_STATIONS } from "@/data/lines";
 import {
   Difficulty,
@@ -94,20 +94,79 @@ export function generateLinesToName(difficulty: Difficulty): Question {
 
 // --- Name to lines ---
 
-export function generateNameToLines(difficulty: Difficulty): Question {
-  const station = randomItem(stationList);
-  const prompt = { kind: "name-to-lines" as const, stationName: station.name };
-  const correctLines = station.lines;
+function deduplicateByCanonical(lineIds: LineId[]): LineId[] {
+  const seen = new Set<string>();
+  return lineIds.filter(id => {
+    const c = String(toCanonicalLineId(id));
+    if (seen.has(c)) return false;
+    seen.add(c);
+    return true;
+  });
+}
 
-  if (difficulty === "easy" || difficulty === "medium") {
-    const total = difficulty === "easy" ? 6 : 10;
-    const distractorLines = sampleExcluding([...LINE_IDS], total - correctLines.length, correctLines);
-    const visibleLines = shuffle([...correctLines, ...distractorLines]) as LineId[];
+function canonicalLineCount(lineIds: LineId[]): number {
+  return new Set(lineIds.map(id => String(toCanonicalLineId(id)))).size;
+}
+
+export function generateNameToLines(difficulty: Difficulty): Question {
+  const pool = difficulty === "easy"
+    ? stationList.filter(s => canonicalLineCount(s.lines) === 1)
+    : difficulty === "medium"
+    ? stationList.filter(s => canonicalLineCount(s.lines) <= 2)
+    : stationList;
+  const station = randomItem(pool);
+  const prompt = { kind: "name-to-lines" as const, stationName: station.name };
+  const correctLines = deduplicateByCanonical(station.lines);
+
+  if (difficulty === "easy") {
+    // Single correct line + 3 distractors, answered with one click.
+    // Deduplicate by canonical ID to avoid visually identical badges (e.g. 7_1 vs 7_2).
+    const correctLine = randomItem(correctLines);
+    const excludedCanonicals = new Set(correctLines.map(id => String(toCanonicalLineId(id))));
+    const seenCanonicals = new Set(excludedCanonicals);
+    const uniquePool = [...LINE_IDS].filter(id => {
+      const c = String(toCanonicalLineId(id));
+      if (seenCanonicals.has(c)) return false;
+      seenCanonicals.add(c);
+      return true;
+    });
+    const distractors = shuffle(uniquePool).slice(0, 3);
+    const visibleLines = shuffle([correctLine, ...distractors]) as LineId[];
+    return { type: "line-select", mode: "name-to-lines", prompt, visibleLines, correctLines: [correctLine] } satisfies LineSelectQuestion;
+  }
+
+  if (difficulty === "medium") {
+    // 8 options, deduplicated by canonical to avoid visually identical badges.
+    const excludedCanonicals = new Set(correctLines.map(id => String(toCanonicalLineId(id))));
+    const seenCanonicals = new Set(excludedCanonicals);
+    const uniquePool = [...LINE_IDS].filter(id => {
+      const c = String(toCanonicalLineId(id));
+      if (seenCanonicals.has(c)) return false;
+      seenCanonicals.add(c);
+      return true;
+    });
+    const distractors = shuffle(uniquePool).slice(0, 8 - correctLines.length);
+    const visibleLines = ([...correctLines, ...distractors] as LineId[]).sort((a, b) => {
+      const ca = String(toCanonicalLineId(a)), cb = String(toCanonicalLineId(b));
+      const na = parseInt(ca), nb = parseInt(cb);
+      if (na !== nb) return na - nb;
+      return (ca.endsWith("bis") ? 1 : 0) - (cb.endsWith("bis") ? 1 : 0);
+    });
     return { type: "line-select", mode: "name-to-lines", prompt, visibleLines, correctLines } satisfies LineSelectQuestion;
   }
 
-  // Hard: show all lines.
-  return { type: "line-select", mode: "name-to-lines", prompt, visibleLines: [...LINE_IDS], correctLines } satisfies LineSelectQuestion;
+  // Hard: show all lines, deduplicated by canonical and sorted.
+  // Use correctLines variants for matching canonicals so badge IDs align with correctLines.
+  const sortFn = (a: LineId, b: LineId) => {
+    const ca = String(toCanonicalLineId(a)), cb = String(toCanonicalLineId(b));
+    const na = parseInt(ca), nb = parseInt(cb);
+    if (na !== nb) return na - nb;
+    return (ca.endsWith("bis") ? 1 : 0) - (cb.endsWith("bis") ? 1 : 0);
+  };
+  const correctCanonicals = new Set(correctLines.map(id => String(toCanonicalLineId(id))));
+  const remaining = deduplicateByCanonical([...LINE_IDS]).filter(id => !correctCanonicals.has(String(toCanonicalLineId(id))));
+  const visibleLines = ([...correctLines, ...remaining] as LineId[]).sort(sortFn);
+  return { type: "line-select", mode: "name-to-lines", prompt, visibleLines, correctLines } satisfies LineSelectQuestion;
 }
 
 // --- Entry point ---
