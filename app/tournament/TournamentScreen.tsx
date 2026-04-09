@@ -68,9 +68,11 @@ export default function TournamentScreen() {
       const correct = question.correctAnswer;
       // Gentle validation: unique substring match with 5+ chars is enough
       const uniqueMatch = normalizedInput.length >= 5
-        ? ([...stations.keys()].filter(name => normalize(name).includes(normalizedInput)).length === 1
-            ? [...stations.keys()].find(name => normalize(name).includes(normalizedInput))!
-            : null)
+        ? (() => {
+            const matches = [...stations.keys()].filter(name => normalize(name).startsWith(normalizedInput));
+            const uniqueNormalized = new Set(matches.map(normalize));
+            return uniqueNormalized.size === 1 ? matches[0] : null;
+          })()
         : null;
       const isCorrect = uniqueMatch === correct || isCorrectAnswer(currentInput, correct);
       if (currentInput && isCorrect) {

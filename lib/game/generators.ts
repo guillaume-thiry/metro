@@ -1,5 +1,5 @@
 import { lines, stationList, LINE_IDS, LineId, activeLines, LINE_WEIGHTS, toCanonicalLineId } from "@/data/index";
-import { POST_FORK_STATIONS } from "@/data/lines";
+import { POST_FORK_STATIONS, FIXED_DIRECTION_LINES } from "@/data/lines";
 import {
   Difficulty,
   Question,
@@ -35,7 +35,9 @@ export function generateCompleteTheLine(difficulty: Difficulty): Question {
     r -= weight(id);
     if (r <= 0) { lineId = id; break; }
   }
-  const stationSeq = Math.random() < 0.5 ? lines[lineId] : [...lines[lineId]].reverse();
+  const stationSeq = FIXED_DIRECTION_LINES.includes(lineId) || Math.random() < 0.5
+    ? lines[lineId]
+    : [...lines[lineId]].reverse();
 
   // Both variants need 3 consecutive stations.
   const maxStart = stationSeq.length - 3;

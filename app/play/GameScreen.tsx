@@ -13,6 +13,17 @@ import { normalize, isCorrectAnswer } from "@/lib/game/answer";
 
 const QUESTIONS_PER_SESSION = 10;
 
+// Given a raw station name and a normalized prefix length, find where to slice
+// the raw string so the ghost suffix starts at the right position.
+function rawSlicePoint(raw: string, normalizedLength: number): number {
+  let count = 0;
+  for (let i = 0; i < raw.length; i++) {
+    count += normalize(raw[i]).length;
+    if (count >= normalizedLength) return i + 1;
+  }
+  return raw.length;
+}
+
 export default function GameScreen() {
   const params = useSearchParams();
   const router = useRouter();
@@ -200,13 +211,13 @@ export default function GameScreen() {
         {question.type === "free-text" && (() => {
           const normalizedInput = normalize(input);
           const suggestion = !answered && difficulty === "medium" && normalizedInput.length >= 5
-            ? ([...stations.keys()].filter(name => normalize(name).includes(normalizedInput)).length === 1
-                ? [...stations.keys()].find(name => normalize(name).includes(normalizedInput))!
-                : null)
+            ? (() => {
+                const matches = [...stations.keys()].filter(name => normalize(name).startsWith(normalizedInput));
+                const uniqueNormalized = new Set(matches.map(normalize));
+                return uniqueNormalized.size === 1 ? matches[0] : null;
+              })()
             : null;
-          const ghostSuffix = suggestion?.toLowerCase().startsWith(input.toLowerCase())
-            ? suggestion.slice(input.length)
-            : null;
+          const ghostSuffix = suggestion ? suggestion.slice(rawSlicePoint(suggestion, normalizedInput.length)) : null;
           return (
           <div className="flex flex-col gap-2">
             <div className={`relative border rounded-xl transition-colors duration-500

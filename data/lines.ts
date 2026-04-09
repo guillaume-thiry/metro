@@ -2,7 +2,7 @@
 // Fill in the full ordered list of stations for each line.
 // Stations at both ends of the line are the terminus stations.
 
-export const LINE_IDS = [1, 2, 3, "3bis", 4, 5, 6, "7_1", "7_2", "7bis", 8, 9, "10_1", "10_2", 11, 12, "13_1", "13_2", 14] as const;
+export const LINE_IDS = [1, 2, 3, "3bis", 4, 5, 6, "7_1", "7_2", "7bis_1", "7bis_2", 8, 9, "10_1", "10_2", 11, 12, "13_1", "13_2", 14] as const;
 export type LineId = (typeof LINE_IDS)[number];
 
 // The real line number/id used for display (color, label) — strips branch suffixes.
@@ -11,7 +11,8 @@ export type CanonicalLineId = (typeof CANONICAL_LINE_IDS)[number];
 
 export function toCanonicalLineId(id: LineId): CanonicalLineId {
   if (typeof id === "string" && /_\d+$/.test(id)) {
-    return Number(id.split("_")[0]) as CanonicalLineId;
+    const base = id.split("_")[0];
+    return (isNaN(Number(base)) ? base : Number(base)) as CanonicalLineId;
   }
   return id as CanonicalLineId;
 }
@@ -21,6 +22,8 @@ export function toCanonicalLineId(id: LineId): CanonicalLineId {
 export const LINE_WEIGHTS: Partial<Record<LineId, number>> = {
   "7_1": 0.5,
   "7_2": 0.5,
+  "7bis_1": 0.5,
+  "7bis_2": 0.5,
   "10_1": 0.5,
   "10_2": 0.5,
   "13_1": 0.5,
@@ -30,20 +33,22 @@ export const LINE_WEIGHTS: Partial<Record<LineId, number>> = {
 // Stations where a line forks into two branches — should be displayed differently.
 export const FORK_STATIONS: string[] = [
   "Maison Blanche", // line 7: splits into 7_1 (Villejuif) and 7_2 (Ivry)
+  "Botzaris", // line 7bis: splits into 7bis_1 and 7bis_2
   "Javel – André Citroën", // line 10: splits into 10_1 and 10_2 on one end
   "Boulogne – Jean Jaurès", // line 10: splits into 10_1 and 10_2 on the other end
   "La Fourche", // line 13: splits into 13_1 and 13_2
 ];
+
+// Lines whose stored order is canonical and should never be randomly reversed when generating questions.
+// Used for cycle-shaped lines (e.g. line 10) where each branch encodes one travel direction.
+export const FIXED_DIRECTION_LINES: LineId[] = ["7bis_1", "7bis_2", "10_1", "10_2"];
 
 // First stations after a fork — multiple valid answers exist for "complete the line"
 // questions ending at the fork, so these should be excluded or handled specially.
 export const POST_FORK_STATIONS: string[] = [
   "Le Kremlin-Bicêtre", // 7_1
   "Porte d'Italie", // 7_2
-  "Porte d'Auteuil", // 10_1
-  "Église d'Auteuil", // 10_1
-  "Michel-Ange – Molitor", // 10_2
-  "Mirabeau", // 10_2
+  // 10_1 and 10_2 have fixed directions, so no ambiguity at their fork points.
   "Guy Môquet", // 13_1
   "Brochant", // 13_2
 ];
@@ -119,7 +124,7 @@ export const lines: Record<LineId, string[]> = {
     "Quatre-Septembre",
     "Bourse",
     "Sentier",
-    "Réaumur - Sébastopol",
+    "Réaumur – Sébastopol",
     "Arts et Métiers",
     "Temple",
     "République",
@@ -292,15 +297,23 @@ export const lines: Record<LineId, string[]> = {
     "Pierre et Marie Curie",
     "Mairie d'Ivry",
   ],
-  "7bis": [
+  "7bis_1": [
     "Louis Blanc",
     "Jaurès",
     "Bolivar",
     "Buttes Chaumont",
     "Botzaris",
-    "Danube",
     "Place des Fêtes",
     "Pré-Saint-Gervais",
+  ],
+  "7bis_2": [
+    "Pré-Saint-Gervais",
+    "Danube",
+    "Botzaris",
+    "Buttes Chaumont",
+    "Bolivar",
+    "Jaurès",
+    "Louis Blanc",  
   ],
   8: [
     "Balard",
@@ -335,8 +348,8 @@ export const lines: Record<LineId, string[]> = {
     "Liberté",
     "Charenton – Écoles",
     "École vétérinaire de Maisons-Alfort",
-    "Maisons-Alfort - Stade",
-    "Maisons-Alfort - Les Juilliottes",
+    "Maisons-Alfort – Stade",
+    "Maisons-Alfort – Les Juilliottes",
     "Créteil – L'Échat",
     "Créteil – Université",
     "Créteil – Préfecture",
@@ -382,26 +395,26 @@ export const lines: Record<LineId, string[]> = {
     "Mairie de Montreuil",
   ],
   "10_1": [
-    "Boulogne – Pont de Saint-Cloud",
-    "Boulogne – Jean Jaurès",
-    "Porte d'Auteuil",
-    "Michel-Ange – Auteuil",
-    "Église d'Auteuil",
-    "Javel – André Citroën",
-    "Charles Michels",
-    "Avenue Émile Zola",
-    "La Motte-Picquet – Grenelle",
-    "Ségur",
-    "Duroc",
-    "Vaneau",
-    "Sèvres – Babylone",
-    "Mabillon",
-    "Odéon",
-    "Cluny – La Sorbonne",
-    "Maubert – Mutualité",
-    "Cardinal Lemoine",
-    "Jussieu",
     "Gare d'Austerlitz",
+    "Jussieu",
+    "Cardinal Lemoine",
+    "Maubert – Mutualité",
+    "Cluny – La Sorbonne",
+    "Odéon",
+    "Mabillon",
+    "Sèvres – Babylone",
+    "Vaneau",
+    "Duroc",
+    "Ségur",
+    "La Motte-Picquet – Grenelle",
+    "Avenue Émile Zola",
+    "Charles Michels",
+    "Javel – André Citroën",
+    "Église d'Auteuil",
+    "Michel-Ange – Auteuil",
+    "Porte d'Auteuil",
+    "Boulogne – Jean Jaurès",
+    "Boulogne – Pont de Saint-Cloud",   
   ],
   "10_2": [
     "Boulogne – Pont de Saint-Cloud",
@@ -535,7 +548,7 @@ export const lines: Record<LineId, string[]> = {
   ],
   14: [
     "Aéroport d'Orly",
-    "Thiais - Orly",
+    "Thiais – Orly",
     "Chevilly-Larue",
     "L'Haÿ-les-Roses",
     "Villejuif - Gustave Roussy",

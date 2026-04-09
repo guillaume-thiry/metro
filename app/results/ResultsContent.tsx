@@ -27,6 +27,19 @@ export default function ResultsContent() {
   const [count, setCount] = useState(tournament ? 0 : score);
   const done = count === score;
 
+  const playAgainPath = tournament
+    ? "/tournament"
+    : mode && difficulty ? `/play?mode=${mode}&difficulty=${difficulty}` : null;
+
+  useEffect(() => {
+    if (!playAgainPath) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Enter") router.push(playAgainPath!);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [playAgainPath]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!tournament) return;
     if (score === 0) { setCount(0); return; }
@@ -67,21 +80,14 @@ export default function ResultsContent() {
       </p>
       {tournament && <p className="text-gray-500 dark:text-gray-400">{t.results.inARow}</p>}
       <div className="flex gap-3">
-        {tournament ? (
+        {playAgainPath && (
           <button
-            onClick={() => router.push("/tournament")}
+            onClick={() => router.push(playAgainPath)}
             className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-xl transition"
           >
             {t.results.playAgain}
           </button>
-        ) : mode && difficulty ? (
-          <button
-            onClick={() => router.push(`/play?mode=${mode}&difficulty=${difficulty}`)}
-            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-xl transition"
-          >
-            {t.results.playAgain}
-          </button>
-        ) : null}
+        )}
         <button
           onClick={() => router.push("/")}
           className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold px-6 py-3 rounded-xl transition"
