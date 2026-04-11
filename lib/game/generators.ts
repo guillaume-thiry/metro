@@ -24,9 +24,11 @@ function sampleExcluding<T>(arr: T[], n: number, exclude: T[]): T[] {
 
 // --- Complete the line ---
 
-export function generateCompleteTheLine(difficulty: Difficulty): Question {
+export function generateCompleteTheLine(difficulty: Difficulty, allowedCanonicals?: Set<string>): Question {
   // Pick a complete line with enough stations, weighted by station count.
-  const eligibleLines = activeLines.filter((id) => lines[id].length >= 4);
+  const eligibleLines = activeLines
+    .filter((id) => lines[id].length >= 4)
+    .filter((id) => !allowedCanonicals || allowedCanonicals.has(String(toCanonicalLineId(id))));
   const weight = (id: LineId) => lines[id].length * (LINE_WEIGHTS[id] ?? 1);
   const totalStations = eligibleLines.reduce((sum, id) => sum + weight(id), 0);
   let r = Math.random() * totalStations;
