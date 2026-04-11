@@ -43,9 +43,14 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center px-4 pt-20 pb-10 sm:p-6 gap-10">
       <div className="text-center flex flex-col items-center gap-2">
         <img src="/previews/metropoly.png" alt="Métropoly" className="w-full max-w-2xl aspect-[5/2] object-cover rounded-3xl" />
-        <div className="flex flex-col sm:flex-row sm:relative sm:items-center sm:justify-center items-center gap-3 sm:gap-0 w-full max-w-2xl mt-6">
-          <p className="text-gray-500 dark:text-gray-400 italic text-center" style={{ animation: "breathe 1.5s ease-in-out infinite" }}>{t.home.subtitle}</p>
-          <Link href="/tournament" className="text-5xl hover:scale-110 transition-transform sm:absolute sm:right-0" title={t.home.tournament} style={{ animation: "trophy-shake 3s ease-in-out infinite" }}>🏆</Link>
+        <p className="text-gray-500 dark:text-gray-400 italic text-center mt-6" style={{ animation: "breathe 1.5s ease-in-out infinite" }}>{t.home.subtitle}</p>
+        <div className="flex gap-4 mt-4 w-full max-w-2xl">
+          <Link href="/training" className="flex-1 flex items-center justify-center gap-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-transparent hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold px-6 py-3 rounded-xl transition">
+            <span className="text-3xl">📚</span> {t.home.training}
+          </Link>
+          <Link href="/tournament" className="flex-1 flex items-center justify-center gap-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-transparent hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold px-6 py-3 rounded-xl transition">
+            <span className="text-3xl">🏆</span> {t.home.tournament}
+          </Link>
         </div>
       </div>
 
