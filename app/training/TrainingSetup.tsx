@@ -12,7 +12,7 @@ export default function TrainingSetup() {
   const { t } = useLang();
 
   const [selected, setSelected] = useState<Set<CanonicalLineId>>(
-    new Set(CANONICAL_LINE_IDS)
+    new Set()
   );
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
 
@@ -49,8 +49,8 @@ export default function TrainingSetup() {
         </div>
 
         {/* Select / deselect all + difficulty */}
-        <div className="flex justify-between items-center">
-          <div className="flex gap-3">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+          <div className="flex gap-3 justify-center md:justify-start">
             <button
               onClick={() => setSelected(new Set(CANONICAL_LINE_IDS))}
               className="text-sm bg-white dark:bg-gray-700 border border-gray-200 dark:border-transparent hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold px-4 py-2 rounded-xl transition"
@@ -64,7 +64,7 @@ export default function TrainingSetup() {
               {t.home.deselectAll}
             </button>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-center md:justify-end">
             {(["easy", "medium", "hard"] as const).map((d) => (
               <button
                 key={d}

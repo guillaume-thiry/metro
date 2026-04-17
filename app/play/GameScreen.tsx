@@ -220,31 +220,41 @@ export default function GameScreen() {
           const ghostSuffix = suggestion ? suggestion.slice(rawSlicePoint(suggestion, normalizedInput.length)) : null;
           return (
           <div className="flex flex-col gap-2">
-            <div className={`relative border rounded-xl transition-colors duration-500
-              ${answered && freeTextCorrect === true ? "bg-green-600 border-green-500" : ""}
-              ${answered && freeTextCorrect === false ? "bg-red-600 border-red-500" : ""}
-              ${!answered ? "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus-within:border-blue-500" : ""}
-            `}>
-              {ghostSuffix && (
-                <div className="absolute inset-0 px-4 py-3 flex items-center pointer-events-none overflow-hidden" aria-hidden>
-                  <span className="whitespace-pre text-transparent select-none">{input}</span>
-                  <span className="whitespace-pre text-gray-400 dark:text-gray-500">{ghostSuffix}</span>
-                </div>
+            <div className="flex gap-2 items-stretch">
+              <div className={`relative flex-1 border rounded-xl transition-colors duration-500
+                ${answered && freeTextCorrect === true ? "bg-green-600 border-green-500" : ""}
+                ${answered && freeTextCorrect === false ? "bg-red-600 border-red-500" : ""}
+                ${!answered ? "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus-within:border-blue-500" : ""}
+              `}>
+                {ghostSuffix && (
+                  <div className="absolute inset-0 px-4 py-3 flex items-center pointer-events-none overflow-hidden" aria-hidden>
+                    <span className="whitespace-pre text-transparent select-none">{input}</span>
+                    <span className="whitespace-pre text-gray-400 dark:text-gray-500">{ghostSuffix}</span>
+                  </div>
+                )}
+                <input
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !answered) submitFreeText();
+                    if (e.key === "Tab" && suggestion) { e.preventDefault(); setInput(suggestion); }
+                  }}
+                  disabled={answered}
+                  placeholder={t.game.placeholder}
+                  className={`w-full bg-transparent px-4 py-3 focus:outline-none transition-colors duration-500
+                    ${answered ? "text-white" : "text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"}
+                  `}
+                />
+              </div>
+              {!answered && (
+                <button
+                  onClick={submitFreeText}
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-xl transition"
+                >
+                  {t.game.confirm}
+                </button>
               )}
-              <input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !answered) submitFreeText();
-                  if (e.key === "Tab" && suggestion) { e.preventDefault(); setInput(suggestion); }
-                }}
-                disabled={answered}
-                placeholder={t.game.placeholder}
-                className={`w-full bg-transparent px-4 py-3 focus:outline-none transition-colors duration-500
-                  ${answered ? "text-white" : "text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"}
-                `}
-              />
             </div>
             <div className={`rounded-xl px-4 py-3 font-medium transition-colors duration-300 ${answered && freeTextCorrect === false ? "bg-green-600 border border-green-500 text-white" : "invisible"}`}>
               {question.correctAnswer}
