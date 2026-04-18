@@ -24,7 +24,7 @@ function sampleExcluding<T>(arr: T[], n: number, exclude: T[]): T[] {
 
 // --- Complete the line ---
 
-export function generateCompleteTheLine(difficulty: Difficulty, allowedCanonicals?: Set<string>): Question {
+export function generateCompleteTheLine(difficulty: Difficulty, allowedCanonicals?: Set<string>, excludePair?: { lineId: LineId; station: string }): Question {
   // Pick a complete line with enough stations, weighted by station count.
   const eligibleLines = activeLines
     .filter((id) => lines[id].length >= 4)
@@ -67,6 +67,11 @@ export function generateCompleteTheLine(difficulty: Difficulty, allowedCanonical
     startIdx = allStartIndices[Math.floor(Math.random() * allStartIndices.length)];
     context = [stationSeq[startIdx], stationSeq[startIdx + 2]];
     correctAnswer = stationSeq[startIdx + 1];
+  }
+
+  // Retry once if this matches the excluded pair
+  if (excludePair && lineId === excludePair.lineId && correctAnswer === excludePair.station) {
+    return generateCompleteTheLine(difficulty, allowedCanonicals);
   }
 
   const prompt = { kind: "complete-the-line" as const, lineId, context, variant };
@@ -112,13 +117,23 @@ function canonicalLineCount(lineIds: LineId[]): number {
   return new Set(lineIds.map(id => String(toCanonicalLineId(id)))).size;
 }
 
-export function generateNameToLines(difficulty: Difficulty): Question {
-  const pool = difficulty === "easy"
-    ? stationList.filter(s => canonicalLineCount(s.lines) === 1)
-    : difficulty === "medium"
-    ? stationList.filter(s => canonicalLineCount(s.lines) <= 2)
-    : stationList;
-  const station = randomItem(pool);
+const nameToLinesMultiStations = stationList.filter(s => canonicalLineCount(s.lines) > 1);
+const nameToLinesSingleStations = stationList.filter(s => canonicalLineCount(s.lines) === 1);
+
+export function generateNameToLines(difficulty: Difficulty, exclude?: { stationName: string }): Question {
+  let station;
+  const pickFrom = (pool: typeof stationList) => {
+    const filtered = exclude ? pool.filter(s => s.name !== exclude.stationName) : pool;
+    return randomItem(filtered.length > 0 ? filtered : pool);
+  };
+  if (difficulty === "easy") {
+    station = pickFrom(nameToLinesSingleStations);
+  } else if (difficulty === "medium") {
+    station = pickFrom(Math.random() < 0.4 ? nameToLinesMultiStations : nameToLinesSingleStations);
+  } else {
+    // hard: 60% multi-line, 40% single-line
+    station = pickFrom(Math.random() < 0.6 ? nameToLinesMultiStations : nameToLinesSingleStations);
+  }
   const prompt = { kind: "name-to-lines" as const, stationName: station.name };
   const correctLines = deduplicateByCanonical(station.lines);
 
@@ -177,10 +192,14 @@ export function generateNameToLines(difficulty: Difficulty): Question {
 
 import { GameMode } from "./types";
 
-export function generateQuestion(mode: GameMode, difficulty: Difficulty): Question {
+export function generateQuestion(mode: GameMode, difficulty: Difficulty, exclude?: { stationName?: string; lineId?: LineId; station?: string }): Question {
   switch (mode) {
-    case "complete-the-line": return generateCompleteTheLine(difficulty);
+    case "complete-the-line": return generateCompleteTheLine(
+      difficulty,
+      undefined,
+      exclude?.lineId ? { lineId: exclude.lineId, station: exclude.station ?? "" } : undefined
+    );
     case "lines-to-name":     return generateLinesToName(difficulty);
-    case "name-to-lines":     return generateNameToLines(difficulty);
+    case "name-to-lines":     return generateNameToLines(difficulty, exclude?.stationName ? { stationName: exclude.stationName } : undefined);
   }
 }

@@ -64,7 +64,13 @@ export default function GameScreen() {
       router.push("/results");
       return;
     }
-    setQuestion(generateQuestion(mode, difficulty));
+    const p = question.prompt;
+    const exclude = p.kind === "name-to-lines"
+      ? { stationName: (p as { stationName: string }).stationName }
+      : p.kind === "complete-the-line"
+      ? { lineId: (p as { lineId: LineId }).lineId, station: (question as { correctAnswer: string }).correctAnswer }
+      : undefined;
+    setQuestion(generateQuestion(mode, difficulty, exclude));
     setQuestionIndex((i) => i + 1);
     setInput("");
     setSelectedLines(new Set());

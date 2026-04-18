@@ -35,15 +35,12 @@ function TimerCircle({ seconds, paused }: { seconds: number; paused: boolean }) 
   );
 }
 
-function nextTournamentQuestion() {
-  return generateQuestion("complete-the-line", "hard");
-}
 
 export default function TournamentScreen() {
   const router = useRouter();
   const { t } = useLang();
 
-  const [question, setQuestion] = useState<Question>(nextTournamentQuestion);
+  const [question, setQuestion] = useState<Question>(() => generateQuestion("complete-the-line", "hard"));
   const [timerKey, setTimerKey] = useState(0);
   const [streak, setStreak] = useState(0);
   const streakRef = useRef(0);
@@ -97,7 +94,9 @@ export default function TournamentScreen() {
   }
 
   function advance() {
-    setQuestion(nextTournamentQuestion());
+    const p = question.prompt as { lineId: LineId };
+    const q = question as { correctAnswer: string };
+    setQuestion(generateQuestion("complete-the-line", "hard", { lineId: p.lineId, station: q.correctAnswer }));
     setTimerKey((k) => k + 1);
     setInput("");
     setFreeTextCorrect(null);
