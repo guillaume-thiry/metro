@@ -8,7 +8,7 @@ import { Difficulty } from "@/lib/game/types";
 import MetroLinePrompt from "@/app/play/MetroLinePrompt";
 import { useLang } from "@/lib/i18n";
 import { normalize, isCorrectAnswer } from "@/lib/game/answer";
-import { stations } from "@/data/index";
+import { stations, LineId } from "@/data/index";
 import { toCanonicalLineId } from "@/data/lines";
 
 function rawSlicePoint(raw: string, normalizedLength: number): number {
@@ -51,7 +51,9 @@ export default function TrainingGame() {
   }, [question]);
 
   function advance() {
-    setQuestion(generateCompleteTheLine(difficulty, allowedCanonicals));
+    const p = question.prompt as { lineId: LineId };
+    const q = question as { correctAnswer: string };
+    setQuestion(generateCompleteTheLine(difficulty, allowedCanonicals, { lineId: p.lineId, station: q.correctAnswer }));
     setAnswered(false);
     setInput("");
     setFreeTextCorrect(null);
