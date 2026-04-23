@@ -45,6 +45,7 @@ export default function TournamentScreen() {
   const [streak, setStreak] = useState(0);
   const streakRef = useRef(0);
   const correctLinesRef = useRef<LineId[]>([]);
+  const successStationsRef = useRef<string[]>([]);
   const [answered, setAnswered] = useState(false);
   const [input, setInput] = useState("");
   const [freeTextCorrect, setFreeTextCorrect] = useState<boolean | null>(null);
@@ -86,6 +87,7 @@ export default function TournamentScreen() {
       if (currentInput && isCorrect) {
         streakRef.current += 1; setStreak(streakRef.current);
         if (question.prompt.kind === "complete-the-line") correctLinesRef.current.push(question.prompt.lineId);
+        successStationsRef.current.push(correct);
         setInput(correct);
         setFreeTextCorrect(true);
       } else {
@@ -98,6 +100,13 @@ export default function TournamentScreen() {
   }, [timerKey, answered]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function endGame() {
+    const failedStation = (question as { correctAnswer: string }).correctAnswer;
+    fetch("/api/stations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ successes: successStationsRef.current, failures: [failedStation] }),
+      keepalive: true,
+    }).catch(() => {});
     sessionStorage.removeItem("scoreSaved");
     sessionStorage.setItem("quizScore", String(streakRef.current));
     sessionStorage.setItem("quizTournament", "true");
@@ -126,6 +135,7 @@ export default function TournamentScreen() {
       streakRef.current += 1;
       setStreak(streakRef.current);
       correctLinesRef.current.push((question.prompt as { lineId: LineId }).lineId);
+      successStationsRef.current.push(correct);
     }
     setFreeTextCorrect(isCorrect);
     setAnswered(true);
