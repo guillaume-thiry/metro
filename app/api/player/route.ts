@@ -16,6 +16,17 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ show_scores: data.show_scores, best_score: data.best_score ?? null });
 }
 
+export async function POST() {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("players")
+    .insert({ name: "", show_scores: false })
+    .select("id")
+    .single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ player_id: data.id });
+}
+
 export async function PATCH(req: NextRequest) {
   const { player_id, show_scores, name } = await req.json();
   if (!player_id) return NextResponse.json({ error: "Invalid data" }, { status: 400 });

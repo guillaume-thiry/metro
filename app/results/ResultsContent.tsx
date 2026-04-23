@@ -121,9 +121,10 @@ export default function ResultsContent() {
   }
 
   async function updateName() {
-    if (!playerId) { console.error("updateName: no playerId yet"); return; }
+    const pid = playerId ?? (localStorage.getItem("playerId") ? Number(localStorage.getItem("playerId")) : null);
+    if (!pid) { console.error("updateName: no playerId yet"); return; }
     const shouldShow = !!playerName.trim();
-    const body: Record<string, unknown> = { player_id: playerId, name: playerName };
+    const body: Record<string, unknown> = { player_id: pid, name: playerName };
     if (shouldShow && !register) body.show_scores = true;
     const res = await fetch("/api/player", {
       method: "PATCH",
@@ -134,7 +135,7 @@ export default function ResultsContent() {
     localStorage.setItem("playerName", playerName);
     setSavedName(playerName);
     if (shouldShow && !register) setRegister(true);
-    fetchLeaderboard(shouldShow ? playerId : null);
+    fetchLeaderboard(shouldShow ? pid : null);
   }
 
   function toggleRegister() {

@@ -50,6 +50,17 @@ export default function TournamentScreen() {
   const [freeTextCorrect, setFreeTextCorrect] = useState<boolean | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const [ready, setReady] = useState(() => !!localStorage.getItem("playerId"));
+
+  useEffect(() => {
+    if (ready) return;
+    fetch("/api/player", { method: "POST" })
+      .then((r) => r.json())
+      .then((d) => { if (d.player_id) localStorage.setItem("playerId", String(d.player_id)); })
+      .catch(() => {})
+      .finally(() => setReady(true));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 50);
   }, [question]);
@@ -120,6 +131,8 @@ export default function TournamentScreen() {
     setAnswered(true);
     setTimeout(isCorrect ? advance : endGame, 2000);
   }
+
+  if (!ready) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>;
 
   const prompt = question.prompt;
   if (prompt.kind !== "complete-the-line" || question.type !== "free-text") return null;

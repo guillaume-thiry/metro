@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY) {
-    return NextResponse.json({ error: "Missing env vars", SUPABASE_URL: !!process.env.SUPABASE_URL, SUPABASE_SECRET_KEY: !!process.env.SUPABASE_SECRET_KEY }, { status: 500 });
-  }
   const supabase = getSupabase();
   const playerId = req.nextUrl.searchParams.get("playerId")
     ? Number(req.nextUrl.searchParams.get("playerId"))
