@@ -87,6 +87,7 @@ export default function TournamentScreen() {
   }, [timerKey, answered]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function endGame() {
+    sessionStorage.removeItem("scoreSaved");
     sessionStorage.setItem("quizScore", String(streakRef.current));
     sessionStorage.setItem("quizTournament", "true");
     sessionStorage.setItem("quizLines", JSON.stringify(correctLinesRef.current));
