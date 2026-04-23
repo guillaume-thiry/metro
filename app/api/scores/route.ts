@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY) {
     return NextResponse.json({ error: "Missing env vars", SUPABASE_URL: !!process.env.SUPABASE_URL, SUPABASE_SECRET_KEY: !!process.env.SUPABASE_SECRET_KEY }, { status: 500 });
   }
+  const supabase = getSupabase();
   const playerId = req.nextUrl.searchParams.get("playerId")
     ? Number(req.nextUrl.searchParams.get("playerId"))
     : null;
@@ -39,18 +40,16 @@ export async function POST(req: NextRequest) {
   if (typeof score !== "number") {
     return NextResponse.json({ error: "Invalid data" }, { status: 400 });
   }
-
+  const supabase = getSupabase();
   let playerId = player_id ?? null;
 
   if (playerId) {
-    // Update best_score only if this score beats the current best
     await supabase
       .from("players")
       .update({ best_score: score })
       .eq("id", playerId)
       .or(`best_score.is.null,best_score.lt.${score}`);
   } else {
-    // First time — create a new player
     const { data, error } = await supabase
       .from("players")
       .insert({ name: name?.trim() ?? "", show_scores: false, best_score: score })

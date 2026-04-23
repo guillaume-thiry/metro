@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
   const playerId = req.nextUrl.searchParams.get("playerId");
   if (!playerId) return NextResponse.json({ error: "Missing playerId" }, { status: 400 });
+  const supabase = getSupabase();
 
   const { data, error } = await supabase
     .from("players")
@@ -18,6 +19,7 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { player_id, show_scores, name } = await req.json();
   if (!player_id) return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+  const supabase = getSupabase();
 
   const update: Record<string, unknown> = {};
   if (typeof show_scores === "boolean") update.show_scores = show_scores;
