@@ -96,34 +96,45 @@ export default function ResultsContent() {
   async function saveScore(previousBest: number | null) {
     if (savingRef.current || saved) return;
     savingRef.current = true;
-    const res = await fetch("/api/scores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player_id: playerId, name: playerName, score }),
-    });
-    const data = await res.json();
-    const pid = data.player_id ?? playerId;
-    if (data.player_id) {
-      setPlayerId(data.player_id);
-      localStorage.setItem("playerId", String(data.player_id));
+    try {
+      const res = await fetch("/api/scores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ player_id: playerId, name: playerName, score }),
+      });
+      const data = await res.json();
+      if (!res.ok) { console.error("saveScore failed", data); savingRef.current = false; return; }
+      const pid = data.player_id ?? playerId;
+      if (data.player_id) {
+        setPlayerId(data.player_id);
+        localStorage.setItem("playerId", String(data.player_id));
+      }
+      savingRef.current = false;
+      sessionStorage.setItem("scoreSaved", "true");
+      setSaved(true);
+      if (previousBest !== null && score > previousBest) setIsNewBest(true);
+      fetchLeaderboard(pid);
+    } catch (e) {
+      console.error("saveScore error", e);
+      savingRef.current = false;
     }
-    savingRef.current = false;
-    sessionStorage.setItem("scoreSaved", "true");
-    setSaved(true);
-    if (previousBest !== null && score > previousBest) setIsNewBest(true);
-    fetchLeaderboard(pid);
   }
 
   async function updateName() {
-    if (!playerId) return;
-    await fetch("/api/player", {
+    if (!playerId) { console.error("updateName: no playerId yet"); return; }
+    const shouldShow = !!playerName.trim();
+    const body: Record<string, unknown> = { player_id: playerId, name: playerName };
+    if (shouldShow && !register) body.show_scores = true;
+    const res = await fetch("/api/player", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player_id: playerId, name: playerName }),
-    }).catch(() => {});
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { console.error("updateName failed", await res.text()); return; }
     localStorage.setItem("playerName", playerName);
     setSavedName(playerName);
-    fetchLeaderboard(register ? playerId : null);
+    if (shouldShow && !register) setRegister(true);
+    fetchLeaderboard(shouldShow ? playerId : null);
   }
 
   function toggleRegister() {
