@@ -36,6 +36,8 @@ export default function GameScreen() {
   const [question, setQuestion] = useState<Question>(() => generateQuestion(mode, difficulty));
   const [score, setScore] = useState(0);
   const scoreRef = useRef(0);
+  const successStationsRef = useRef<string[]>([]);
+  const failureStationsRef = useRef<string[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -56,6 +58,14 @@ export default function GameScreen() {
 
   function nextQuestion() {
     if (questionIndex + 1 >= QUESTIONS_PER_SESSION) {
+      if (successStationsRef.current.length > 0 || failureStationsRef.current.length > 0) {
+        fetch("/api/stations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ successes: successStationsRef.current, failures: failureStationsRef.current }),
+          keepalive: true,
+        }).catch(() => {});
+      }
       sessionStorage.setItem("quizScore", String(scoreRef.current));
       sessionStorage.setItem("quizTotal", String(QUESTIONS_PER_SESSION));
       sessionStorage.setItem("quizMode", mode);
@@ -104,6 +114,10 @@ export default function GameScreen() {
     } else {
       setFeedback(`${t.game.wrongAnswer} ${correct}`);
     }
+    if (question.prompt.kind === "complete-the-line") {
+      if (isCorrect) successStationsRef.current.push(correct);
+      else failureStationsRef.current.push(correct);
+    }
     setFreeTextCorrect(isCorrect);
     setAnswered(true);
     setTimeout(nextQuestion, 2000);
@@ -115,6 +129,10 @@ export default function GameScreen() {
     if (answered || question.type !== "multiple-choice") return;
     const isCorrect = option === question.correctAnswer;
     if (isCorrect) { scoreRef.current += 1; setScore(scoreRef.current); }
+    if (question.prompt.kind === "complete-the-line") {
+      if (isCorrect) successStationsRef.current.push(question.correctAnswer);
+      else failureStationsRef.current.push(question.correctAnswer);
+    }
     setSelectedOption(option);
     setAnswered(true);
     setTimeout(() => setRevealed(true), 150);

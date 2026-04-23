@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
     .from("players")
     .select("id, name, best_score")
     .eq("show_scores", true)
-    .order("best_score", { ascending: false });
+    .order("best_score", { ascending: false })
+    .order("best_score_ts", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!players || players.length === 0) return NextResponse.json({ top5: [], playerEntry: null, entryAbove: null, entryBelow: null });
@@ -22,6 +23,12 @@ export async function GET(req: NextRequest) {
     player: p.name ?? "?",
     score: p.best_score,
   }));
+
+  const all = req.nextUrl.searchParams.get("all") === "true";
+
+  if (all) {
+    return NextResponse.json({ ranked, playerId });
+  }
 
   const top5 = ranked.slice(0, 5);
   const playerInTop5 = playerId ? top5.some((s) => s.player_id === playerId) : false;
@@ -43,13 +50,13 @@ export async function POST(req: NextRequest) {
   if (playerId) {
     await supabase
       .from("players")
-      .update({ best_score: score })
+      .update({ best_score: score, best_score_ts: new Date().toISOString() })
       .eq("id", playerId)
       .or(`best_score.is.null,best_score.lt.${score}`);
   } else {
     const { data, error } = await supabase
       .from("players")
-      .insert({ name: name?.trim() ?? "", show_scores: false, best_score: score })
+      .insert({ name: name?.trim() ?? "", show_scores: false, best_score: score, best_score_ts: new Date().toISOString() })
       .select("id")
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
