@@ -6,7 +6,7 @@ import { GameMode, Difficulty } from "@/lib/game/types";
 import { useLang } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 
-const GAME_MODES: GameMode[] = ["complete-the-line", "name-to-lines", "lines-to-name"];
+const GAME_MODES: GameMode[] = ["complete-the-line", "name-to-lines"];
 const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"];
 function previewSrc(mode: GameMode, theme: string, lang: string): string | null {
   if (mode === "complete-the-line") return `/previews/complete_${theme}_${lang}.png`;
